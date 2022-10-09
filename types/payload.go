@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+
+	"github.com/coming-chat/go-aptos/aptostypes"
 )
 
 const ModuleAddress = "0x89576037b3cc0b89645ea393a47787bb348272c76d6941c574b053672b848039"
@@ -12,7 +14,15 @@ type EntryFunctionPayload struct {
 	Args     []interface{}
 }
 
-func buildPayloadOneStepRoute(
+func (p EntryFunctionPayload) ToAptosPayload() *aptostypes.Payload {
+	return &aptostypes.Payload{
+		Function:      p.Function,
+		TypeArguments: p.TypeArgs,
+		Arguments:     p.Args,
+	}
+}
+
+func BuildPayloadOneStepRoute(
 	firstDexType uint8,
 	firstPoolType uint64,
 	firstIsXToY bool,
@@ -38,7 +48,7 @@ func buildPayloadOneStepRoute(
 	}
 }
 
-func buildPayloadTwoStepRoute(
+func BuildPayloadTwoStepRoute(
 	firstDexType uint8,
 	firstPoolType uint64,
 	firstIsXToY bool,
@@ -70,7 +80,7 @@ func buildPayloadTwoStepRoute(
 	}
 }
 
-func buildPayloadThreeStepRoute(
+func BuildPayloadThreeStepRoute(
 	firstDexType uint8,
 	firstPoolType uint64,
 	firstIsXToY bool,

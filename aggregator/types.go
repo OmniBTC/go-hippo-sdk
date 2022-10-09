@@ -1,9 +1,11 @@
-package types
+package aggregator
 
 import (
 	"fmt"
 	"math/big"
 	"sync"
+
+	"github.com/omnibtc/go-hippo-sdk/types"
 )
 
 type DexType int
@@ -43,13 +45,13 @@ type TradingPool interface {
 	DexType() DexType
 	PoolType() PoolType
 	IsRoutable() bool
-	XCoinInfo() CoinInfo
-	YCoinInfo() CoinInfo
+	XCoinInfo() types.CoinInfo
+	YCoinInfo() types.CoinInfo
 	IsStateLoaded() bool
-	ReloadState(App) error
+	ReloadState() error
 	GetPrice() PriceType
 	GetQuote(TokenAmount, bool) QuoteType
-	MakePayload(input TokenAmount, minOut TokenAmount) EntryFunctionPayload
+	MakePayload(input TokenAmount, minOut TokenAmount) types.EntryFunctionPayload
 }
 
 type TradingPoolProvider interface {
@@ -62,14 +64,14 @@ type TradeStep struct {
 	IsXtoY bool
 }
 
-func NewTradeStep(pool TradingPool, isXtoY bool) *TradeStep {
-	return &TradeStep{
+func NewTradeStep(pool TradingPool, isXtoY bool) TradeStep {
+	return TradeStep{
 		Pool:   pool,
 		IsXtoY: isXtoY,
 	}
 }
 
-func (ts *TradeStep) XCoinInfo() CoinInfo {
+func (ts *TradeStep) XCoinInfo() types.CoinInfo {
 	if ts.IsXtoY {
 		return ts.Pool.XCoinInfo()
 	} else {
@@ -77,7 +79,7 @@ func (ts *TradeStep) XCoinInfo() CoinInfo {
 	}
 }
 
-func (ts *TradeStep) YCoinInfo() CoinInfo {
+func (ts *TradeStep) YCoinInfo() types.CoinInfo {
 	if ts.IsXtoY {
 		return ts.Pool.YCoinInfo()
 	} else {
@@ -113,21 +115,26 @@ func (ts *TradeStep) GetQuote(inputAmount TokenAmount) QuoteType {
 	return ts.Pool.GetQuote(inputAmount, ts.IsXtoY)
 }
 
-func (ts *TradeStep) GetTagE() TokenType {
+func (ts *TradeStep) GetTagE() types.TokenType {
 	panic("todo")
 }
 
 type TradeRoute struct {
-	tokens []CoinInfo
+	tokens []types.CoinInfo
 	steps  []TradeStep
 }
 
-func NewTradeRoute(steps []TradeStep) *TradeRoute {
+type RouteAndQuote struct {
+	Route TradeRoute
+	Quote *QuoteType
+}
+
+func NewTradeRoute(steps []TradeStep) TradeRoute {
 	if len(steps) < 1 {
 		panic("route need at least on trade step")
 	}
-	tr := &TradeRoute{
-		tokens: make([]CoinInfo, 0),
+	tr := TradeRoute{
+		tokens: make([]types.CoinInfo, 0),
 		steps:  steps,
 	}
 	tokenFullName := steps[0].XCoinInfo().TokenType.FullName()
@@ -144,11 +151,11 @@ func NewTradeRoute(steps []TradeStep) *TradeRoute {
 	return tr
 }
 
-func (tr *TradeRoute) XCoinInfo() CoinInfo {
+func (tr *TradeRoute) XCoinInfo() types.CoinInfo {
 	return tr.steps[0].XCoinInfo()
 }
 
-func (tr *TradeRoute) YCoinInfo() CoinInfo {
+func (tr *TradeRoute) YCoinInfo() types.CoinInfo {
 	return tr.steps[len(tr.steps)-1].YCoinInfo()
 }
 
@@ -174,12 +181,12 @@ func (tr *TradeRoute) GetPrice() PriceType {
 	}
 }
 
-func (tr *TradeRoute) GetQuote(inputAmount TokenAmount) QuoteType {
+func (tr *TradeRoute) GetQuote(inputAmount TokenAmount) *QuoteType {
 	outputAmount := inputAmount
 	for _, step := range tr.steps {
 		outputAmount = step.GetQuote(outputAmount).OutputAmount
 	}
-	return QuoteType{
+	return &QuoteType{
 		InputSymbol:  tr.XCoinInfo().TokenType.Symbol,
 		OutputSymbol: tr.YCoinInfo().TokenType.Symbol,
 		InputAmount:  inputAmount,
@@ -200,24 +207,24 @@ func (tr *TradeRoute) HasRoundTrip() bool {
 	return false
 }
 
-func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) EntryFunctionPayload {
+func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) types.EntryFunctionPayload {
 	inputAmountU64 := inputAmount.Uint64()
 	minOutAmountU64 := minOutAmount.Uint64()
 	switch len(tr.steps) {
 	case 1:
 		step0 := tr.steps[0]
-		return buildPayloadOneStepRoute(
+		return types.BuildPayloadOneStepRoute(
 			uint8(step0.Pool.DexType()),
 			uint64(step0.Pool.PoolType()),
 			step0.IsXtoY,
 			inputAmountU64,
 			minOutAmountU64,
-			[]TokenType{tr.XCoinInfo().TokenType, tr.YCoinInfo().TokenType, step0.GetTagE()},
+			[]types.TokenType{tr.XCoinInfo().TokenType, tr.YCoinInfo().TokenType, step0.GetTagE()},
 		)
 	case 2:
 		step0 := tr.steps[0]
 		step1 := tr.steps[1]
-		return buildPayloadTwoStepRoute(
+		return types.BuildPayloadTwoStepRoute(
 			uint8(step0.Pool.DexType()),
 			uint64(step0.Pool.PoolType()),
 			step0.IsXtoY,
@@ -226,7 +233,7 @@ func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) EntryFunct
 			step1.IsXtoY,
 			inputAmountU64,
 			minOutAmountU64,
-			[]TokenType{
+			[]types.TokenType{
 				tr.tokens[0].TokenType,
 				tr.tokens[1].TokenType,
 				tr.tokens[2].TokenType,
@@ -238,7 +245,7 @@ func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) EntryFunct
 		step0 := tr.steps[0]
 		step1 := tr.steps[1]
 		step2 := tr.steps[2]
-		return buildPayloadThreeStepRoute(
+		return types.BuildPayloadThreeStepRoute(
 			uint8(step0.Pool.DexType()),
 			uint64(step0.Pool.PoolType()),
 			step0.IsXtoY,
@@ -250,7 +257,7 @@ func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) EntryFunct
 			step2.IsXtoY,
 			inputAmountU64,
 			minOutAmountU64,
-			[]TokenType{
+			[]types.TokenType{
 				tr.tokens[0].TokenType,
 				tr.tokens[1].TokenType,
 				tr.tokens[2].TokenType,
@@ -283,15 +290,13 @@ func DexTypeName(t DexType) string {
 	return ""
 }
 
-func ReloadAllPool(app App, pools []TradingPool) {
+func ReloadAllPool(pools []TradingPool) {
 	wg := sync.WaitGroup{}
 	for _, p := range pools {
 		wg.Add(1)
 		go func(p TradingPool) {
-			defer func() {
-				wg.Done()
-			}()
-			p.ReloadState(app)
+			defer wg.Done()
+			p.ReloadState()
 		}(p)
 	}
 	wg.Wait()
