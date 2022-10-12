@@ -39,7 +39,7 @@ func (c *CoinListClient) GetCoinInfoByType(tokenType types.TokenType) (types.Coi
 }
 
 func (c *CoinListClient) buildCache() error {
-	fullList, err := c.app.CoinList.QueryFetchFullList(c.fetcher, types.ModuleAddress)
+	fullList, err := c.app.CoinList.QueryFetchFullList()
 	if err != nil {
 		return err
 	}

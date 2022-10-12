@@ -6,6 +6,8 @@ type TokenType struct {
 
 type CoinInfo struct {
 	// TODO
+	Decimals  int
+	Symbol    string
 	TokenType TokenType
 }
 

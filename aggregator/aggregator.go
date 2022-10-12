@@ -5,6 +5,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/omnibtc/go-hippo-sdk/aggregator/base"
 	"github.com/omnibtc/go-hippo-sdk/contract"
 	"github.com/omnibtc/go-hippo-sdk/types"
 )
@@ -12,33 +13,33 @@ import (
 type TradeAggregator struct {
 	app           contract.App
 	fetcher       types.SimulationKeys
-	poolProviders []TradingPoolProvider
-	allPolls      []TradingPool
-	xToAnyPools   map[string][]TradingPool
+	poolProviders []base.TradingPoolProvider
+	allPolls      []base.TradingPool
+	xToAnyPools   map[string][]base.TradingPool
 }
 
 func NewTradeAggregator(
 	app contract.App,
 	fetcher types.SimulationKeys,
-	poolProviders []TradingPoolProvider) *TradeAggregator {
+	poolProviders []base.TradingPoolProvider) *TradeAggregator {
 	aggregator := &TradeAggregator{
 		app:           app,
 		fetcher:       fetcher,
 		poolProviders: poolProviders,
-		allPolls:      make([]TradingPool, 0),
-		xToAnyPools:   make(map[string][]TradingPool),
+		allPolls:      make([]base.TradingPool, 0),
+		xToAnyPools:   make(map[string][]base.TradingPool),
 	}
 	aggregator.loadAllPoolLists()
 	return aggregator
 }
 
 func (a *TradeAggregator) loadAllPoolLists() {
-	allPools := make([]TradingPool, 0)
+	allPools := make([]base.TradingPool, 0)
 	wg := sync.WaitGroup{}
 	l := sync.Mutex{}
 	for _, p := range a.poolProviders {
 		wg.Add(1)
-		go func(p TradingPoolProvider) {
+		go func(p base.TradingPoolProvider) {
 			defer wg.Done()
 			pls := p.LoadPoolList()
 			if pls == nil {
@@ -51,11 +52,11 @@ func (a *TradeAggregator) loadAllPoolLists() {
 	}
 	wg.Wait()
 
-	xToAnyPools := make(map[string][]TradingPool)
+	xToAnyPools := make(map[string][]base.TradingPool)
 	for _, p := range allPools {
 		fullName := p.XCoinInfo().TokenType.FullName()
 		if _, ok := a.xToAnyPools[fullName]; !ok {
-			a.xToAnyPools[fullName] = []TradingPool{p}
+			a.xToAnyPools[fullName] = []base.TradingPool{p}
 		} else {
 			ps := a.xToAnyPools[fullName]
 			ps = append(ps, p)
@@ -66,14 +67,14 @@ func (a *TradeAggregator) loadAllPoolLists() {
 	a.allPolls = allPools
 }
 
-func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteable bool) []TradeStep {
+func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteable bool) []base.TradeStep {
 	xFullName := x.TokenType.FullName()
 	yFullName := y.TokenType.FullName()
 	if xFullName == yFullName {
 		panic("cannot swap same token")
 	}
 
-	steps := make([]TradeStep, 0)
+	steps := make([]base.TradeStep, 0)
 	if xToYCandidates, ok := a.xToAnyPools[xFullName]; ok {
 		for _, pool := range xToYCandidates {
 			if requireRouteable && !pool.IsRoutable() {
@@ -81,7 +82,7 @@ func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteab
 			}
 
 			if pool.YCoinInfo().TokenType.FullName() == yFullName {
-				steps = append(steps, NewTradeStep(pool, true))
+				steps = append(steps, base.NewTradeStep(pool, true))
 			}
 		}
 	}
@@ -91,7 +92,7 @@ func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteab
 				continue
 			}
 			if pool.YCoinInfo().TokenType.FullName() == xFullName {
-				steps = append(steps, NewTradeStep(pool, false))
+				steps = append(steps, base.NewTradeStep(pool, false))
 			}
 		}
 	}
@@ -99,24 +100,24 @@ func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteab
 	return steps
 }
 
-func (a *TradeAggregator) GetOneStepRoutes(x, y types.CoinInfo) []TradeRoute {
+func (a *TradeAggregator) GetOneStepRoutes(x, y types.CoinInfo) []base.TradeRoute {
 	xFullName := x.TokenType.FullName()
 	if xFullName == y.TokenType.FullName() {
 		panic("cannot swap same token")
 	}
 
 	steps := a.GetXtoYDirectSteps(x, y, false)
-	routes := make([]TradeRoute, 0)
+	routes := make([]base.TradeRoute, 0)
 	for _, step := range steps {
-		routes = append(routes, NewTradeRoute([]TradeStep{step}))
+		routes = append(routes, base.NewTradeRoute([]base.TradeStep{step}))
 	}
 	return routes
 }
 
-func (a *TradeAggregator) GetTwoStepRoutes(x, y types.CoinInfo) ([]TradeRoute, error) {
+func (a *TradeAggregator) GetTwoStepRoutes(x, y types.CoinInfo) ([]base.TradeRoute, error) {
 	xFullName := x.TokenType.FullName()
 	yFullName := y.TokenType.FullName()
-	result := make([]TradeRoute, 0)
+	result := make([]base.TradeRoute, 0)
 	fullList, err := a.app.CoinList.QueryFetchFullList()
 	if err != nil {
 		return nil, err
@@ -141,8 +142,8 @@ func (a *TradeAggregator) GetTwoStepRoutes(x, y types.CoinInfo) ([]TradeRoute, e
 
 		for _, xToK := range xTokSteps {
 			for _, kToy := range kToySteps {
-				result = append(result, NewTradeRoute(
-					[]TradeStep{xToK, kToy},
+				result = append(result, base.NewTradeRoute(
+					[]base.TradeStep{xToK, kToy},
 				))
 			}
 		}
@@ -150,10 +151,10 @@ func (a *TradeAggregator) GetTwoStepRoutes(x, y types.CoinInfo) ([]TradeRoute, e
 	return result, nil
 }
 
-func (a *TradeAggregator) GetThreeStepRoutes(x, y types.CoinInfo) ([]TradeRoute, error) {
+func (a *TradeAggregator) GetThreeStepRoutes(x, y types.CoinInfo) ([]base.TradeRoute, error) {
 	xFullName := x.TokenType.FullName()
 	yFullName := y.TokenType.FullName()
-	result := make([]TradeRoute, 0)
+	result := make([]base.TradeRoute, 0)
 	fullList, err := a.app.CoinList.QueryFetchFullList()
 	if err != nil {
 		return nil, err
@@ -175,9 +176,9 @@ func (a *TradeAggregator) GetThreeStepRoutes(x, y types.CoinInfo) ([]TradeRoute,
 		}
 		for _, xToKRoute := range xtoKRoutes {
 			for _, kToY := range kToYSteps {
-				result = append(result, NewTradeRoute([]TradeStep{
-					xToKRoute.steps[0],
-					xToKRoute.steps[1],
+				result = append(result, base.NewTradeRoute([]base.TradeStep{
+					xToKRoute.Steps[0],
+					xToKRoute.Steps[1],
 					kToY,
 				}))
 			}
@@ -186,8 +187,8 @@ func (a *TradeAggregator) GetThreeStepRoutes(x, y types.CoinInfo) ([]TradeRoute,
 	return result, nil
 }
 
-func (a *TradeAggregator) GetAllRoutes(x, y types.CoinInfo, maxSteps int, allowRoundTrip bool) ([]TradeRoute, error) {
-	allRoutes := make([]TradeRoute, 0)
+func (a *TradeAggregator) GetAllRoutes(x, y types.CoinInfo, maxSteps int, allowRoundTrip bool) ([]base.TradeRoute, error) {
+	allRoutes := make([]base.TradeRoute, 0)
 	if maxSteps >= 1 {
 		rs := a.GetOneStepRoutes(x, y)
 		allRoutes = append(allRoutes, rs...)
@@ -207,7 +208,7 @@ func (a *TradeAggregator) GetAllRoutes(x, y types.CoinInfo, maxSteps int, allowR
 		}
 	}
 	if !allowRoundTrip {
-		result := make([]TradeRoute, 0, len(allRoutes))
+		result := make([]base.TradeRoute, 0, len(allRoutes))
 		for _, item := range allRoutes {
 			if item.HasRoundTrip() {
 				continue
@@ -219,7 +220,7 @@ func (a *TradeAggregator) GetAllRoutes(x, y types.CoinInfo, maxSteps int, allowR
 	return allRoutes, nil
 }
 
-func (a *TradeAggregator) GetQuotes(inputAmount *big.Int, x, y types.CoinInfo, maxSteps int, reloadState bool, allowRoundTrip bool) ([]*RouteAndQuote, error) {
+func (a *TradeAggregator) GetQuotes(inputAmount *big.Int, x, y types.CoinInfo, maxSteps int, reloadState bool, allowRoundTrip bool) ([]*base.RouteAndQuote, error) {
 	routes, err := a.GetAllRoutes(x, y, maxSteps, allowRoundTrip)
 	if err != nil {
 		return nil, err
@@ -231,9 +232,9 @@ func (a *TradeAggregator) GetQuotes(inputAmount *big.Int, x, y types.CoinInfo, m
 	// 	}
 	// }
 
-	result := make([]*RouteAndQuote, len(routes))
+	result := make([]*base.RouteAndQuote, len(routes))
 	for _, route := range routes {
-		result = append(result, &RouteAndQuote{
+		result = append(result, &base.RouteAndQuote{
 			Route: route,
 			Quote: route.GetQuote(inputAmount),
 		})
@@ -244,7 +245,7 @@ func (a *TradeAggregator) GetQuotes(inputAmount *big.Int, x, y types.CoinInfo, m
 	return result, nil
 }
 
-func (a *TradeAggregator) GetBestQuote(inputAmount *big.Int, x, y types.CoinInfo, maxSteps int, reloadState bool, allowRoundTrip bool) (*RouteAndQuote, error) {
+func (a *TradeAggregator) GetBestQuote(inputAmount *big.Int, x, y types.CoinInfo, maxSteps int, reloadState bool, allowRoundTrip bool) (*base.RouteAndQuote, error) {
 	quotes, err := a.GetQuotes(inputAmount, x, y, maxSteps, reloadState, allowRoundTrip)
 	if err != nil {
 		return nil, err

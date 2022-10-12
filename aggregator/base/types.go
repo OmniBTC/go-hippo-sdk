@@ -1,4 +1,4 @@
-package aggregator
+package base
 
 import (
 	"fmt"
@@ -120,8 +120,8 @@ func (ts *TradeStep) GetTagE() types.TokenType {
 }
 
 type TradeRoute struct {
-	tokens []types.CoinInfo
-	steps  []TradeStep
+	Tokens []types.CoinInfo
+	Steps  []TradeStep
 }
 
 type RouteAndQuote struct {
@@ -134,11 +134,11 @@ func NewTradeRoute(steps []TradeStep) TradeRoute {
 		panic("route need at least on trade step")
 	}
 	tr := TradeRoute{
-		tokens: make([]types.CoinInfo, 0),
-		steps:  steps,
+		Tokens: make([]types.CoinInfo, 0),
+		Steps:  steps,
 	}
 	tokenFullName := steps[0].XCoinInfo().TokenType.FullName()
-	tr.tokens = append(tr.tokens, steps[0].XCoinInfo())
+	tr.Tokens = append(tr.Tokens, steps[0].XCoinInfo())
 	for _, step := range steps {
 		xFullName := step.XCoinInfo().TokenType.FullName()
 		yFullName := step.YCoinInfo().TokenType.FullName()
@@ -146,17 +146,17 @@ func NewTradeRoute(steps []TradeStep) TradeRoute {
 			panic(fmt.Errorf("mismatching tokens in route, expect %s but received %s", tokenFullName, xFullName))
 		}
 		tokenFullName = yFullName
-		tr.tokens = append(tr.tokens, step.YCoinInfo())
+		tr.Tokens = append(tr.Tokens, step.YCoinInfo())
 	}
 	return tr
 }
 
 func (tr *TradeRoute) XCoinInfo() types.CoinInfo {
-	return tr.steps[0].XCoinInfo()
+	return tr.Steps[0].XCoinInfo()
 }
 
 func (tr *TradeRoute) YCoinInfo() types.CoinInfo {
-	return tr.steps[len(tr.steps)-1].YCoinInfo()
+	return tr.Steps[len(tr.Steps)-1].YCoinInfo()
 }
 
 func (tr *TradeRoute) XTag() string {
@@ -170,7 +170,7 @@ func (tr *TradeRoute) YTag() string {
 func (tr *TradeRoute) GetPrice() PriceType {
 	xToy := big.NewInt(1)
 	yTox := big.NewInt(1)
-	for _, step := range tr.steps {
+	for _, step := range tr.Steps {
 		price := step.Pool.GetPrice()
 		xToy = big.NewInt(0).Mul(xToy, price.XToY)
 		yTox = big.NewInt(0).Mul(yTox, price.YToX)
@@ -183,7 +183,7 @@ func (tr *TradeRoute) GetPrice() PriceType {
 
 func (tr *TradeRoute) GetQuote(inputAmount TokenAmount) *QuoteType {
 	outputAmount := inputAmount
-	for _, step := range tr.steps {
+	for _, step := range tr.Steps {
 		outputAmount = step.GetQuote(outputAmount).OutputAmount
 	}
 	return &QuoteType{
@@ -197,7 +197,7 @@ func (tr *TradeRoute) GetQuote(inputAmount TokenAmount) *QuoteType {
 
 func (tr *TradeRoute) HasRoundTrip() bool {
 	s := make(map[string]struct{})
-	for _, token := range tr.tokens {
+	for _, token := range tr.Tokens {
 		if _, ok := s[token.TokenType.FullName()]; ok {
 			return true
 		} else {
@@ -210,9 +210,9 @@ func (tr *TradeRoute) HasRoundTrip() bool {
 func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) types.EntryFunctionPayload {
 	inputAmountU64 := inputAmount.Uint64()
 	minOutAmountU64 := minOutAmount.Uint64()
-	switch len(tr.steps) {
+	switch len(tr.Steps) {
 	case 1:
-		step0 := tr.steps[0]
+		step0 := tr.Steps[0]
 		return types.BuildPayloadOneStepRoute(
 			uint8(step0.Pool.DexType()),
 			uint64(step0.Pool.PoolType()),
@@ -222,8 +222,8 @@ func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) types.Entr
 			[]types.TokenType{tr.XCoinInfo().TokenType, tr.YCoinInfo().TokenType, step0.GetTagE()},
 		)
 	case 2:
-		step0 := tr.steps[0]
-		step1 := tr.steps[1]
+		step0 := tr.Steps[0]
+		step1 := tr.Steps[1]
 		return types.BuildPayloadTwoStepRoute(
 			uint8(step0.Pool.DexType()),
 			uint64(step0.Pool.PoolType()),
@@ -234,17 +234,17 @@ func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) types.Entr
 			inputAmountU64,
 			minOutAmountU64,
 			[]types.TokenType{
-				tr.tokens[0].TokenType,
-				tr.tokens[1].TokenType,
-				tr.tokens[2].TokenType,
+				tr.Tokens[0].TokenType,
+				tr.Tokens[1].TokenType,
+				tr.Tokens[2].TokenType,
 				step0.GetTagE(),
 				step1.GetTagE(),
 			}, // X, Y, Z, E1, E2
 		)
 	case 3:
-		step0 := tr.steps[0]
-		step1 := tr.steps[1]
-		step2 := tr.steps[2]
+		step0 := tr.Steps[0]
+		step1 := tr.Steps[1]
+		step2 := tr.Steps[2]
 		return types.BuildPayloadThreeStepRoute(
 			uint8(step0.Pool.DexType()),
 			uint64(step0.Pool.PoolType()),
@@ -258,10 +258,10 @@ func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) types.Entr
 			inputAmountU64,
 			minOutAmountU64,
 			[]types.TokenType{
-				tr.tokens[0].TokenType,
-				tr.tokens[1].TokenType,
-				tr.tokens[2].TokenType,
-				tr.tokens[3].TokenType,
+				tr.Tokens[0].TokenType,
+				tr.Tokens[1].TokenType,
+				tr.Tokens[2].TokenType,
+				tr.Tokens[3].TokenType,
 				step0.GetTagE(),
 				step1.GetTagE(),
 				step2.GetTagE(),
