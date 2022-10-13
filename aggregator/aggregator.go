@@ -226,12 +226,6 @@ func (a *TradeAggregator) GetQuotes(inputAmount *big.Int, x, y types.CoinInfo, m
 		return nil, err
 	}
 
-	// reload pools
-	// for _, route := range routes {
-	// 	for _, step := range route.steps {
-	// 	}
-	// }
-
 	result := make([]*base.RouteAndQuote, len(routes))
 	for _, route := range routes {
 		result = append(result, &base.RouteAndQuote{

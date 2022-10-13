@@ -3,7 +3,6 @@ package base
 import (
 	"fmt"
 	"math/big"
-	"sync"
 
 	"github.com/omnibtc/go-hippo-sdk/types"
 )
@@ -48,7 +47,7 @@ type TradingPool interface {
 	XCoinInfo() types.CoinInfo
 	YCoinInfo() types.CoinInfo
 	IsStateLoaded() bool
-	ReloadState() error
+	// ReloadState() error
 	GetPrice() PriceType
 	GetQuote(TokenAmount, bool) QuoteType
 	MakePayload(input TokenAmount, minOut TokenAmount) types.EntryFunctionPayload
@@ -290,14 +289,14 @@ func DexTypeName(t DexType) string {
 	return ""
 }
 
-func ReloadAllPool(pools []TradingPool) {
-	wg := sync.WaitGroup{}
-	for _, p := range pools {
-		wg.Add(1)
-		go func(p TradingPool) {
-			defer wg.Done()
-			p.ReloadState()
-		}(p)
-	}
-	wg.Wait()
-}
+// func ReloadAllPool(pools []TradingPool) {
+// 	wg := sync.WaitGroup{}
+// 	for _, p := range pools {
+// 		wg.Add(1)
+// 		go func(p TradingPool) {
+// 			defer wg.Done()
+// 			p.ReloadState()
+// 		}(p)
+// 	}
+// 	wg.Wait()
+// }

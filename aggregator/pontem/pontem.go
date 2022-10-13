@@ -65,10 +65,10 @@ func (t *TradingPool) IsStateLoaded() bool {
 	return true
 }
 
-func (t *TradingPool) ReloadState() error {
-	// todo 使用 client 请求 pool 数据
-	return nil
-}
+// func (t *TradingPool) ReloadState() error {
+// 	// todo 使用 client 请求 pool 数据
+// 	return nil
+// }
 
 func (t *TradingPool) GetPrice() base.PriceType {
 	panic("not implemented")
