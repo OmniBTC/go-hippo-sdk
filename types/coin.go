@@ -1,22 +1,20 @@
 package types
 
 type TokenType struct {
-	Symbol string
+	StructTag StructTag
 }
 
 type CoinInfo struct {
-	// TODO
+	Name      string
 	Decimals  int
 	Symbol    string
 	TokenType TokenType
 }
 
 func (t TokenType) FullName() string {
-	panic("todo")
-	return ""
+	return t.StructTag.GetFullName()
 }
 
 func (t TokenType) ToTypeTag() string {
-	panic("todo")
-	return ""
+	return t.FullName()
 }

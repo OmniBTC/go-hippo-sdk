@@ -9,14 +9,12 @@ type CoinListClient struct {
 	fullNameToCoinInfo map[string]types.CoinInfo
 	coinList           []types.CoinInfo
 
-	app     contract.App
-	fetcher types.SimulationKeys
+	app contract.App
 }
 
-func LoadCoinListClient(app contract.App, fetcher types.SimulationKeys) (*CoinListClient, error) {
+func LoadCoinListClient(app contract.App) (*CoinListClient, error) {
 	c := &CoinListClient{
 		app:                app,
-		fetcher:            fetcher,
 		fullNameToCoinInfo: make(map[string]types.CoinInfo, 0),
 		coinList:           make([]types.CoinInfo, 0),
 	}

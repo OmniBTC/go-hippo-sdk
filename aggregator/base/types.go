@@ -186,8 +186,8 @@ func (tr *TradeRoute) GetQuote(inputAmount TokenAmount) *QuoteType {
 		outputAmount = step.GetQuote(outputAmount).OutputAmount
 	}
 	return &QuoteType{
-		InputSymbol:  tr.XCoinInfo().TokenType.Symbol,
-		OutputSymbol: tr.YCoinInfo().TokenType.Symbol,
+		InputSymbol:  tr.XCoinInfo().Symbol,
+		OutputSymbol: tr.YCoinInfo().Symbol,
 		InputAmount:  inputAmount,
 		OutputAmount: outputAmount,
 		AvgPrice:     big.NewInt(0).Div(outputAmount, inputAmount),

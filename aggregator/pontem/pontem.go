@@ -6,6 +6,7 @@ import (
 
 	"github.com/coming-chat/go-aptos/aptosclient"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/base"
+	"github.com/omnibtc/go-hippo-sdk/aggregator/coinlist"
 	"github.com/omnibtc/go-hippo-sdk/types"
 )
 
@@ -24,15 +25,16 @@ type TradingPool struct {
 }
 
 type PoolProvider struct {
-	client       *aptosclient.RestClient
-	ownerAddress string
+	client         *aptosclient.RestClient
+	ownerAddress   string
+	coinListClient *coinlist.CoinListClient
 }
 
 func NewTradingPool() base.TradingPool {
 	return &TradingPool{}
 }
 
-func NewTradingPoolProvider(client *aptosclient.RestClient, ownerAddress string) base.TradingPoolProvider {
+func NewTradingPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
 	return &PoolProvider{
 		client:       client,
 		ownerAddress: ownerAddress,
@@ -90,8 +92,8 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 	coinOutAmt := getCoinOutWithFees(inputAmount, reserveInAmt, reserveOutAmt)
 
 	return base.QuoteType{
-		InputSymbol:  inputTokenInfo.TokenType.Symbol,
-		OutputSymbol: outputTokenInfo.TokenType.Symbol,
+		InputSymbol:  inputTokenInfo.Symbol,
+		OutputSymbol: outputTokenInfo.Symbol,
 		InputAmount:  inputAmount,
 		OutputAmount: coinOutAmt,
 		AvgPrice: big.NewInt(0).Div(
@@ -132,14 +134,58 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 		if !strings.Contains(resource.Type, "liquidity_pool::LiquidityPool") {
 			continue
 		}
+		tag, err := types.ParseMoveStructTag(resource.Type)
+		if err != nil {
+			// todo handle error
+			continue
+		}
+		if len(tag.TypeParams) < 3 {
+			continue
+		}
+		xTag := tag.TypeParams[0].StructTag
+		yTag := tag.TypeParams[1].StructTag
+		lpTag := tag.TypeParams[2].StructTag
+		if nil == xTag || nil == yTag || nil == lpTag {
+			continue
+		}
+		xCoinInfo, bx := p.coinListClient.GetCoinInfoByType(types.TokenType{
+			StructTag: *xTag,
+		})
+		yCoinInfo, by := p.coinListClient.GetCoinInfoByType(types.TokenType{
+			StructTag: *yTag,
+		})
+		if !bx || !by {
+			continue
+		}
 
-		// todo 解析 resource
+		x := resource.Data["coin_x_reserve"].(map[string]interface{})["value"].(string)
+		y := resource.Data["coin_y_reserve"].(map[string]interface{})["value"].(string)
+		xint, b := big.NewInt(0).SetString(x, 10)
+		if !b {
+			continue
+		}
+		yint, b := big.NewInt(0).SetString(y, 10)
+		if !b {
+			continue
+		}
+
+		poolList = append(poolList, &TradingPool{
+			pontemPool: RawPontemPool{
+				CoinXReserve: xint,
+				CoinYReserve: yint,
+			},
+			xCoinInfo:    xCoinInfo,
+			yCoinInfo:    yCoinInfo,
+			ownerAddress: p.ownerAddress,
+			lpTag:        lpTag.GetFullName(),
+		})
 	}
 
 	return poolList
 }
 
 func getCoinOutWithFees(coinInVal *big.Int, reserveInSize *big.Int, reserveOutSize *big.Int) *big.Int {
+	// todo Uncorellated  use go-aptos-liquidswap
 	feePct := big.NewInt(3)
 	feeScale := big.NewInt(1000)
 	feeMultiplier := big.NewInt(0).Sub(feeScale, feePct)
