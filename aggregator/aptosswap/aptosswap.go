@@ -106,7 +106,7 @@ func MapResourceToPoolInfo(resource aptostypes.AccountResource) (*AptoswapPoolIn
 	if !b {
 		return nil, nil
 	}
-	y, b := big.NewInt(0).SetString(data["x"].(map[string]interface{})["value"].(string), 10)
+	y, b := big.NewInt(0).SetString(data["y"].(map[string]interface{})["value"].(string), 10)
 	if !b {
 		return nil, nil
 	}
@@ -183,7 +183,7 @@ func (a *AptoswapPoolInfo) TotalLpFee() *big.Int {
 func (a *AptoswapPoolInfo) _computeAmount(dx, x, y *big.Int) *big.Int {
 	numerator := new(big.Int).Mul(y, dx)
 	denominator := new(big.Int).Add(x, dx)
-	dy := new(big.Int).Quo(numerator, denominator)
+	dy := new(big.Int).Div(numerator, denominator)
 	return dy
 }
 
