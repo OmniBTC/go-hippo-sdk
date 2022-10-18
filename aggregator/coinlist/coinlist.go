@@ -23,7 +23,7 @@ func LoadCoinListClient(app contract.App) (*CoinListClient, error) {
 }
 
 func (c *CoinListClient) HasTokenType(tokenType types.TokenType) bool {
-	_, ok := c.fullNameToCoinInfo[tokenType.FullName()]
+	_, ok := c.fullNameToCoinInfo[tokenType.GetFullName()]
 	return ok
 }
 
@@ -32,7 +32,7 @@ func (c *CoinListClient) GetCoinInfoList() []types.CoinInfo {
 }
 
 func (c *CoinListClient) GetCoinInfoByType(tokenType types.TokenType) (types.CoinInfo, bool) {
-	v, o := c.fullNameToCoinInfo[tokenType.FullName()]
+	v, o := c.fullNameToCoinInfo[tokenType.GetFullName()]
 	return v, o
 }
 
@@ -47,7 +47,7 @@ func (c *CoinListClient) buildCache() error {
 		return err
 	}
 	for _, tokenInfo := range fullList {
-		c.fullNameToCoinInfo[tokenInfo.TokenType.FullName()] = tokenInfo
+		c.fullNameToCoinInfo[tokenInfo.TokenType.GetFullName()] = tokenInfo
 	}
 	c.coinList = fullList
 	return nil

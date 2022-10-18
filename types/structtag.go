@@ -9,15 +9,21 @@ import (
 )
 
 const (
-	Bool    = "bool"
-	U8      = "u8"
-	U64     = "u64"
-	U128    = "u128"
-	Address = "address"
-	Signer  = "signer"
+	Bool    StringTokenType = "bool"
+	U8      StringTokenType = "u8"
+	U64     StringTokenType = "u64"
+	U128    StringTokenType = "u128"
+	Address StringTokenType = "address"
+	Signer  StringTokenType = "signer"
 )
 
-var atomicTypeTags = []string{Bool, U8, U64, U128, Address, Signer}
+type StringTokenType string
+
+func (s StringTokenType) GetFullName() string {
+	return string(s)
+}
+
+var atomicTypeTags = []StringTokenType{Bool, U8, U64, U128, Address, Signer}
 var structTagNameReg *regexp.Regexp = regexp.MustCompile("^[a-zA-Z_][a-zA-Z_0-9]*<")
 
 type TypeTag struct {
@@ -151,7 +157,8 @@ func parseTypeTag(name string) (result TypeTag, remain string, err error) {
 }
 
 func parseAtomicTag(name string) (*AtomicTypeTag, string) {
-	for _, tag := range atomicTypeTags {
+	for _, t := range atomicTypeTags {
+		tag := string(t)
 		if strings.HasPrefix(name, tag) {
 			if len(name) == len(tag) {
 				return &AtomicTypeTag{

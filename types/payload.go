@@ -33,7 +33,7 @@ func BuildPayloadOneStepRoute(
 	// todo abi
 	typeArgs := make([]string, len(p))
 	for _, item := range p {
-		typeArgs = append(typeArgs, item.FullName())
+		typeArgs = append(typeArgs, item.GetFullName())
 	}
 	return EntryFunctionPayload{
 		Function: fmt.Sprintf("%s::%s::%s", ModuleAddress, "aggregator", "one_step_route"),
@@ -62,7 +62,7 @@ func BuildPayloadTwoStepRoute(
 	// todo abi
 	typeArgs := make([]string, len(p))
 	for _, item := range p {
-		typeArgs = append(typeArgs, item.FullName())
+		typeArgs = append(typeArgs, item.GetFullName())
 	}
 	return EntryFunctionPayload{
 		Function: fmt.Sprintf("%s::%s::%s", ModuleAddress, "aggregator", "two_step_route"),
@@ -97,7 +97,7 @@ func BuildPayloadThreeStepRoute(
 	// todo abi
 	typeArgs := make([]string, len(p))
 	for _, item := range p {
-		typeArgs = append(typeArgs, item.FullName())
+		typeArgs = append(typeArgs, item.GetFullName())
 	}
 	return EntryFunctionPayload{
 		Function: fmt.Sprintf("%s::%s::%s", ModuleAddress, "aggregator", "three_step_route"),

@@ -1,7 +1,7 @@
 package types
 
-type TokenType struct {
-	StructTag StructTag
+type TokenType interface {
+	GetFullName() string
 }
 
 type CoinInfo struct {
@@ -9,12 +9,4 @@ type CoinInfo struct {
 	Decimals  int
 	Symbol    string
 	TokenType TokenType
-}
-
-func (t TokenType) FullName() string {
-	return t.StructTag.GetFullName()
-}
-
-func (t TokenType) ToTypeTag() string {
-	return t.FullName()
 }

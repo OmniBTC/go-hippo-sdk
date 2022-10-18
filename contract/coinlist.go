@@ -33,12 +33,10 @@ func (c *DevCoinListApp) QueryFetchFullList() (list []types.CoinInfo, err error)
 			Name:     item[0],
 			Decimals: 8,
 			Symbol:   item[1],
-			TokenType: types.TokenType{
-				StructTag: types.StructTag{
-					Address: devModuleAddress,
-					Module:  devModuleCoinName,
-					Name:    item[2],
-				},
+			TokenType: &types.StructTag{
+				Address: devModuleAddress,
+				Module:  devModuleCoinName,
+				Name:    item[2],
 			},
 		})
 	}
@@ -47,34 +45,28 @@ func (c *DevCoinListApp) QueryFetchFullList() (list []types.CoinInfo, err error)
 		Name:     "XBTC",
 		Decimals: 8,
 		Symbol:   "XBTC",
-		TokenType: types.TokenType{
-			StructTag: types.StructTag{
-				Address: "0x3b0a7c06837e8fbcce41af0e629fdc1f087b06c06ff9e86f81910995288fd7fb",
-				Module:  "xbtc",
-				Name:    "XBTC",
-			},
+		TokenType: &types.StructTag{
+			Address: "0x3b0a7c06837e8fbcce41af0e629fdc1f087b06c06ff9e86f81910995288fd7fb",
+			Module:  "xbtc",
+			Name:    "XBTC",
 		},
 	}, types.CoinInfo{
 		Name:     "USDA",
 		Symbol:   "USDA",
 		Decimals: 6,
-		TokenType: types.TokenType{
-			StructTag: types.StructTag{
-				Address: "0x1000000f373eb95323f8f73af0e324427ca579541e3b70c0df15c493c72171aa",
-				Module:  "usda",
-				Name:    "USDA",
-			},
+		TokenType: &types.StructTag{
+			Address: "0x1000000f373eb95323f8f73af0e324427ca579541e3b70c0df15c493c72171aa",
+			Module:  "usda",
+			Name:    "USDA",
 		},
 	}, types.CoinInfo{
 		Name:     "APTOS",
 		Symbol:   "APT",
 		Decimals: 8,
-		TokenType: types.TokenType{
-			StructTag: types.StructTag{
-				Address: "0x1",
-				Module:  "aptos_coin",
-				Name:    "AptosCoin",
-			},
+		TokenType: &types.StructTag{
+			Address: "0x1",
+			Module:  "aptos_coin",
+			Name:    "AptosCoin",
 		},
 	})
 

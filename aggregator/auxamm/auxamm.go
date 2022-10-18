@@ -1,7 +1,8 @@
-package pontem
+package auxamm
 
 import (
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/coming-chat/go-aptos/aptosclient"
@@ -11,42 +12,22 @@ import (
 	"github.com/omnibtc/go-hippo-sdk/util"
 )
 
-type RawPontemPool struct {
-	CoinXReserve *big.Int
-	CoinYReserve *big.Int
-}
-
 type TradingPool struct {
-	pontemPool      RawPontemPool
-	xCoinInfo       types.CoinInfo
-	yCoinInfo       types.CoinInfo
-	ownerAddress    string
-	lpTag           types.StructTag
-	poolResourceTag string
-}
-
-type PoolProvider struct {
-	client         *aptosclient.RestClient
-	ownerAddress   string
-	coinListClient *coinlist.CoinListClient
+	xCoinInfo    types.CoinInfo
+	yCoinInfo    types.CoinInfo
+	feeBps       int
+	frozen       bool
+	coinXReserve *big.Int
+	coinYReserve *big.Int
+	ownerAddress string
 }
 
 func NewTradingPool() base.TradingPool {
 	return &TradingPool{}
 }
 
-func NewTradingPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
-	return &PoolProvider{
-		client:         client,
-		ownerAddress:   ownerAddress,
-		coinListClient: coinListClient,
-	}
-}
-
-/** implement base.TradingPool */
-
 func (t *TradingPool) DexType() base.DexType {
-	return base.Pontem
+	return base.Aux
 }
 
 func (t *TradingPool) PoolType() base.PoolType {
@@ -54,7 +35,7 @@ func (t *TradingPool) PoolType() base.PoolType {
 }
 
 func (t *TradingPool) IsRoutable() bool {
-	return true
+	return !t.frozen
 }
 
 func (t *TradingPool) XCoinInfo() types.CoinInfo {
@@ -66,36 +47,28 @@ func (t *TradingPool) YCoinInfo() types.CoinInfo {
 }
 
 func (t *TradingPool) IsStateLoaded() bool {
-	return true
+	return t.coinXReserve != nil && t.coinYReserve != nil
 }
 
-func (t *TradingPool) GetTagE() types.TokenType {
-	return &t.lpTag
-}
-
-// func (t *TradingPool) ReloadState() error {
-// 	// todo 使用 client 请求 pool 数据
-// 	return nil
-// }
-
+// ReloadState() error
 func (t *TradingPool) GetPrice() base.PriceType {
 	panic("not implemented")
 }
 
 func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.QuoteType {
-	if t.pontemPool.CoinXReserve == nil || t.pontemPool.CoinYReserve == nil {
-		panic("pontem pool not loaded")
+	if !t.IsStateLoaded() {
+		panic("aux pool not loaded")
 	}
 	inputTokenInfo := t.xCoinInfo
 	outputTokenInfo := t.yCoinInfo
-	reserveInAmt := t.pontemPool.CoinXReserve
-	reserveOutAmt := t.pontemPool.CoinYReserve
+	reserveInAmt := t.coinXReserve
+	reserveOutAmt := t.coinYReserve
 	if !isXToY {
 		inputTokenInfo, outputTokenInfo = outputTokenInfo, inputTokenInfo
 		reserveInAmt, reserveOutAmt = reserveOutAmt, reserveInAmt
 	}
 
-	coinOutAmt := util.GetCoinOutWithFees(inputAmount, reserveInAmt, reserveOutAmt, 3, 1000)
+	coinOutAmt := util.GetCoinOutWithFees(inputAmount, reserveInAmt, reserveOutAmt, int64(t.feeBps), 10000)
 
 	return base.QuoteType{
 		InputSymbol:  inputTokenInfo.Symbol,
@@ -105,13 +78,29 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 	}
 }
 
+func (t *TradingPool) GetTagE() types.TokenType {
+	return types.U8
+}
+
 func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount) types.EntryFunctionPayload {
 	panic("not implemented")
 }
 
-/** implement base.TradingPoolProvider */
+type AuxPoolProvider struct {
+	client         *aptosclient.RestClient
+	ownerAddress   string
+	coinListClient *coinlist.CoinListClient
+}
 
-func (p *PoolProvider) LoadPoolList() []base.TradingPool {
+func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
+	return &AuxPoolProvider{
+		client:         client,
+		ownerAddress:   ownerAddress,
+		coinListClient: coinListClient,
+	}
+}
+
+func (p *AuxPoolProvider) LoadPoolList() []base.TradingPool {
 	poolList := make([]base.TradingPool, 0)
 	resources, err := p.client.GetAccountResources(p.ownerAddress)
 	if err != nil {
@@ -119,7 +108,7 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 	}
 
 	for _, resource := range resources {
-		if !strings.Contains(resource.Type, "liquidity_pool::LiquidityPool") {
+		if !strings.Contains(resource.Type, "amm::Pool") {
 			continue
 		}
 		tag, err := types.ParseMoveStructTag(resource.Type)
@@ -127,13 +116,12 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 			// todo handle error
 			continue
 		}
-		if len(tag.TypeParams) < 3 {
+		if len(tag.TypeParams) < 2 {
 			continue
 		}
 		xTag := tag.TypeParams[0].StructTag
 		yTag := tag.TypeParams[1].StructTag
-		lpTag := tag.TypeParams[2].StructTag
-		if nil == xTag || nil == yTag || nil == lpTag {
+		if nil == xTag || nil == yTag {
 			continue
 		}
 		xCoinInfo, bx := p.coinListClient.GetCoinInfoByType(xTag)
@@ -142,8 +130,8 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 			continue
 		}
 
-		x := resource.Data["coin_x_reserve"].(map[string]interface{})["value"].(string)
-		y := resource.Data["coin_y_reserve"].(map[string]interface{})["value"].(string)
+		x := resource.Data["x_reserve"].(map[string]interface{})["value"].(string)
+		y := resource.Data["y_reserve"].(map[string]interface{})["value"].(string)
 		xint, b := big.NewInt(0).SetString(x, 10)
 		if !b {
 			continue
@@ -152,16 +140,17 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 		if !b {
 			continue
 		}
+		feeBps, _ := strconv.Atoi(resource.Data["fee_bps"].(string))
+		frozen := resource.Data["frozen"].(bool)
 
 		poolList = append(poolList, &TradingPool{
-			pontemPool: RawPontemPool{
-				CoinXReserve: xint,
-				CoinYReserve: yint,
-			},
 			xCoinInfo:    xCoinInfo,
 			yCoinInfo:    yCoinInfo,
 			ownerAddress: p.ownerAddress,
-			lpTag:        *lpTag,
+			coinXReserve: xint,
+			coinYReserve: yint,
+			feeBps:       feeBps,
+			frozen:       frozen,
 		})
 	}
 

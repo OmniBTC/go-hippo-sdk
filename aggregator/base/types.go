@@ -17,6 +17,8 @@ const (
 	Basiq
 	Ditto
 	Tortuga
+	Aptosswap
+	Aux // 8
 )
 
 type PoolType uint64
@@ -34,9 +36,6 @@ type QuoteType struct {
 	OutputSymbol string
 	InputAmount  TokenAmount // bigint, eg. 100000000, = amount * 10^decimals
 	OutputAmount TokenAmount
-	InitialPrice TokenAmountRatio
-	FinalPrice   TokenAmountRatio
-	PriceImpact  int
 }
 
 type TradingPool interface {
@@ -48,7 +47,7 @@ type TradingPool interface {
 	IsStateLoaded() bool
 	// ReloadState() error
 	GetPrice() PriceType
-	GetQuote(TokenAmount, bool) QuoteType
+	GetQuote(inputAmount TokenAmount, isXToY bool) QuoteType
 	GetTagE() types.TokenType
 	MakePayload(input TokenAmount, minOut TokenAmount) types.EntryFunctionPayload
 }
@@ -136,11 +135,11 @@ func NewTradeRoute(steps []TradeStep) TradeRoute {
 		Tokens: make([]types.CoinInfo, 0),
 		Steps:  steps,
 	}
-	tokenFullName := steps[0].XCoinInfo().TokenType.FullName()
+	tokenFullName := steps[0].XCoinInfo().TokenType.GetFullName()
 	tr.Tokens = append(tr.Tokens, steps[0].XCoinInfo())
 	for _, step := range steps {
-		xFullName := step.XCoinInfo().TokenType.FullName()
-		yFullName := step.YCoinInfo().TokenType.FullName()
+		xFullName := step.XCoinInfo().TokenType.GetFullName()
+		yFullName := step.YCoinInfo().TokenType.GetFullName()
 		if xFullName != tokenFullName {
 			panic(fmt.Errorf("mismatching tokens in route, expect %s but received %s", tokenFullName, xFullName))
 		}
@@ -159,11 +158,11 @@ func (tr *TradeRoute) YCoinInfo() types.CoinInfo {
 }
 
 func (tr *TradeRoute) XTag() string {
-	return tr.XCoinInfo().TokenType.ToTypeTag()
+	return tr.XCoinInfo().TokenType.GetFullName()
 }
 
 func (tr *TradeRoute) YTag() string {
-	return tr.YCoinInfo().TokenType.ToTypeTag()
+	return tr.YCoinInfo().TokenType.GetFullName()
 }
 
 func (tr *TradeRoute) GetPrice() PriceType {
@@ -196,10 +195,10 @@ func (tr *TradeRoute) GetQuote(inputAmount TokenAmount) *QuoteType {
 func (tr *TradeRoute) HasRoundTrip() bool {
 	s := make(map[string]struct{})
 	for _, token := range tr.Tokens {
-		if _, ok := s[token.TokenType.FullName()]; ok {
+		if _, ok := s[token.TokenType.GetFullName()]; ok {
 			return true
 		} else {
-			s[token.TokenType.FullName()] = struct{}{}
+			s[token.TokenType.GetFullName()] = struct{}{}
 		}
 	}
 	return false
@@ -284,6 +283,10 @@ func DexTypeName(t DexType) string {
 		return "Ditto"
 	case Tortuga:
 		return "Tortuga"
+	case Aptosswap:
+		return "Aptosswap"
+	case Aux:
+		return "Aux"
 	}
 	return ""
 }

@@ -54,7 +54,7 @@ func (a *TradeAggregator) loadAllPoolLists() {
 
 	xToAnyPools := make(map[string][]base.TradingPool)
 	for _, p := range allPools {
-		fullName := p.XCoinInfo().TokenType.FullName()
+		fullName := p.XCoinInfo().TokenType.GetFullName()
 		if _, ok := xToAnyPools[fullName]; !ok {
 			xToAnyPools[fullName] = []base.TradingPool{p}
 		} else {
@@ -68,8 +68,8 @@ func (a *TradeAggregator) loadAllPoolLists() {
 }
 
 func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteable bool) []base.TradeStep {
-	xFullName := x.TokenType.FullName()
-	yFullName := y.TokenType.FullName()
+	xFullName := x.TokenType.GetFullName()
+	yFullName := y.TokenType.GetFullName()
 	if xFullName == yFullName {
 		panic("cannot swap same token")
 	}
@@ -81,7 +81,7 @@ func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteab
 				continue
 			}
 
-			if pool.YCoinInfo().TokenType.FullName() == yFullName {
+			if pool.YCoinInfo().TokenType.GetFullName() == yFullName {
 				steps = append(steps, base.NewTradeStep(pool, true))
 			}
 		}
@@ -91,7 +91,7 @@ func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteab
 			if requireRouteable && !pool.IsRoutable() {
 				continue
 			}
-			if pool.YCoinInfo().TokenType.FullName() == xFullName {
+			if pool.YCoinInfo().TokenType.GetFullName() == xFullName {
 				steps = append(steps, base.NewTradeStep(pool, false))
 			}
 		}
@@ -101,8 +101,8 @@ func (a *TradeAggregator) GetXtoYDirectSteps(x, y types.CoinInfo, requireRouteab
 }
 
 func (a *TradeAggregator) GetOneStepRoutes(x, y types.CoinInfo) []base.TradeRoute {
-	xFullName := x.TokenType.FullName()
-	if xFullName == y.TokenType.FullName() {
+	xFullName := x.TokenType.GetFullName()
+	if xFullName == y.TokenType.GetFullName() {
 		panic("cannot swap same token")
 	}
 
@@ -115,15 +115,15 @@ func (a *TradeAggregator) GetOneStepRoutes(x, y types.CoinInfo) []base.TradeRout
 }
 
 func (a *TradeAggregator) GetTwoStepRoutes(x, y types.CoinInfo) ([]base.TradeRoute, error) {
-	xFullName := x.TokenType.FullName()
-	yFullName := y.TokenType.FullName()
+	xFullName := x.TokenType.GetFullName()
+	yFullName := y.TokenType.GetFullName()
 	result := make([]base.TradeRoute, 0)
 	fullList, err := a.app.CoinList.QueryFetchFullList()
 	if err != nil {
 		return nil, err
 	}
 	for _, k := range fullList {
-		kFullName := k.TokenType.FullName()
+		kFullName := k.TokenType.GetFullName()
 		if kFullName == xFullName || kFullName == yFullName {
 			continue
 		}
@@ -152,15 +152,15 @@ func (a *TradeAggregator) GetTwoStepRoutes(x, y types.CoinInfo) ([]base.TradeRou
 }
 
 func (a *TradeAggregator) GetThreeStepRoutes(x, y types.CoinInfo) ([]base.TradeRoute, error) {
-	xFullName := x.TokenType.FullName()
-	yFullName := y.TokenType.FullName()
+	xFullName := x.TokenType.GetFullName()
+	yFullName := y.TokenType.GetFullName()
 	result := make([]base.TradeRoute, 0)
 	fullList, err := a.app.CoinList.QueryFetchFullList()
 	if err != nil {
 		return nil, err
 	}
 	for _, k := range fullList {
-		kFullName := k.TokenType.FullName()
+		kFullName := k.TokenType.GetFullName()
 		if kFullName == xFullName || kFullName == yFullName {
 			continue
 		}

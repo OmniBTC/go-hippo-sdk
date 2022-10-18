@@ -7,15 +7,15 @@ import (
 
 	"github.com/coming-chat/go-aptos/aptosclient"
 	"github.com/omnibtc/go-hippo-sdk/aggregator"
+	"github.com/omnibtc/go-hippo-sdk/aggregator/auxamm"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/base"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/coinlist"
-	"github.com/omnibtc/go-hippo-sdk/aggregator/pontem"
 	"github.com/omnibtc/go-hippo-sdk/contract"
 	"github.com/omnibtc/go-hippo-sdk/types"
 )
 
+const poolAddress = "0xe1d61154f57bbbb256bb6e3ea786102e7d5c9af481cb4d11b11e579f98218f27"
 const TestNode = "https://fullnode.testnet.aptoslabs.com"
-const pontemAddress = "0x385068db10693e06512ed54b1e6e8f1fb9945bb7a78c28a45585939ce953f99e"
 
 func main() {
 	client, err := aptosclient.Dial(context.Background(), TestNode)
@@ -32,7 +32,7 @@ func main() {
 			CoinList: coinListApp,
 		},
 		types.SimulationKeys{},
-		[]base.TradingPoolProvider{pontem.NewTradingPoolProvider(client, pontemAddress, coinListClient)},
+		[]base.TradingPoolProvider{auxamm.NewPoolProvider(client, poolAddress, coinListClient)},
 	)
 	coinX, ok := coinListClient.GetCoinInfoByFullName("0x498d8926f16eb9ca90cab1b3a26aa6f97a080b3fcbe6e83ae150b7243a00fb68::devnet_coins::DevnetBTC")
 	if !ok {
