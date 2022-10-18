@@ -20,7 +20,7 @@ type TradingPool struct {
 	xCoinInfo       types.CoinInfo
 	yCoinInfo       types.CoinInfo
 	ownerAddress    string
-	lpTag           string // todo structTag
+	lpTag           types.StructTag
 	poolResourceTag string
 }
 
@@ -36,8 +36,9 @@ func NewTradingPool() base.TradingPool {
 
 func NewTradingPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
 	return &PoolProvider{
-		client:       client,
-		ownerAddress: ownerAddress,
+		client:         client,
+		ownerAddress:   ownerAddress,
+		coinListClient: coinListClient,
 	}
 }
 
@@ -65,6 +66,12 @@ func (t *TradingPool) YCoinInfo() types.CoinInfo {
 
 func (t *TradingPool) IsStateLoaded() bool {
 	return true
+}
+
+func (t *TradingPool) GetTagE() types.TokenType {
+	return types.TokenType{
+		StructTag: t.lpTag,
+	}
 }
 
 // func (t *TradingPool) ReloadState() error {
@@ -96,24 +103,6 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 		OutputSymbol: outputTokenInfo.Symbol,
 		InputAmount:  inputAmount,
 		OutputAmount: coinOutAmt,
-		AvgPrice: big.NewInt(0).Div(
-			big.NewInt(0).Div(
-				coinOutAmt,
-				big.NewInt(0).Exp(
-					big.NewInt(10),
-					big.NewInt(int64(outputTokenInfo.Decimals)),
-					nil,
-				),
-			),
-			big.NewInt(0).Div(
-				inputAmount,
-				big.NewInt(0).Exp(
-					big.NewInt(10),
-					big.NewInt(int64(inputTokenInfo.Decimals)),
-					nil,
-				),
-			),
-		),
 	}
 }
 
@@ -177,7 +166,7 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 			xCoinInfo:    xCoinInfo,
 			yCoinInfo:    yCoinInfo,
 			ownerAddress: p.ownerAddress,
-			lpTag:        lpTag.GetFullName(),
+			lpTag:        *lpTag,
 		})
 	}
 

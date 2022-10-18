@@ -55,12 +55,12 @@ func (a *TradeAggregator) loadAllPoolLists() {
 	xToAnyPools := make(map[string][]base.TradingPool)
 	for _, p := range allPools {
 		fullName := p.XCoinInfo().TokenType.FullName()
-		if _, ok := a.xToAnyPools[fullName]; !ok {
-			a.xToAnyPools[fullName] = []base.TradingPool{p}
+		if _, ok := xToAnyPools[fullName]; !ok {
+			xToAnyPools[fullName] = []base.TradingPool{p}
 		} else {
-			ps := a.xToAnyPools[fullName]
+			ps := xToAnyPools[fullName]
 			ps = append(ps, p)
-			a.xToAnyPools[fullName] = ps
+			xToAnyPools[fullName] = ps
 		}
 	}
 	a.xToAnyPools = xToAnyPools
@@ -227,11 +227,11 @@ func (a *TradeAggregator) GetQuotes(inputAmount *big.Int, x, y types.CoinInfo, m
 	}
 
 	result := make([]*base.RouteAndQuote, len(routes))
-	for _, route := range routes {
-		result = append(result, &base.RouteAndQuote{
+	for i, route := range routes {
+		result[i] = &base.RouteAndQuote{
 			Route: route,
 			Quote: route.GetQuote(inputAmount),
-		})
+		}
 	}
 	sort.Slice(result, func(i, j int) bool {
 		return ((*big.Int)(result[i].Quote.OutputAmount)).Cmp(result[j].Quote.OutputAmount) >= 0

@@ -34,7 +34,6 @@ type QuoteType struct {
 	OutputSymbol string
 	InputAmount  TokenAmount // bigint, eg. 100000000, = amount * 10^decimals
 	OutputAmount TokenAmount
-	AvgPrice     TokenAmountRatio
 	InitialPrice TokenAmountRatio
 	FinalPrice   TokenAmountRatio
 	PriceImpact  int
@@ -50,6 +49,7 @@ type TradingPool interface {
 	// ReloadState() error
 	GetPrice() PriceType
 	GetQuote(TokenAmount, bool) QuoteType
+	GetTagE() types.TokenType
 	MakePayload(input TokenAmount, minOut TokenAmount) types.EntryFunctionPayload
 }
 
@@ -115,7 +115,7 @@ func (ts *TradeStep) GetQuote(inputAmount TokenAmount) QuoteType {
 }
 
 func (ts *TradeStep) GetTagE() types.TokenType {
-	panic("todo")
+	return ts.Pool.GetTagE()
 }
 
 type TradeRoute struct {
@@ -190,7 +190,6 @@ func (tr *TradeRoute) GetQuote(inputAmount TokenAmount) *QuoteType {
 		OutputSymbol: tr.YCoinInfo().Symbol,
 		InputAmount:  inputAmount,
 		OutputAmount: outputAmount,
-		AvgPrice:     big.NewInt(0).Div(outputAmount, inputAmount),
 	}
 }
 

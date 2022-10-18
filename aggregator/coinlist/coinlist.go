@@ -36,6 +36,11 @@ func (c *CoinListClient) GetCoinInfoByType(tokenType types.TokenType) (types.Coi
 	return v, o
 }
 
+func (c *CoinListClient) GetCoinInfoByFullName(fullName string) (types.CoinInfo, bool) {
+	v, o := c.fullNameToCoinInfo[fullName]
+	return v, o
+}
+
 func (c *CoinListClient) buildCache() error {
 	fullList, err := c.app.CoinList.QueryFetchFullList()
 	if err != nil {
