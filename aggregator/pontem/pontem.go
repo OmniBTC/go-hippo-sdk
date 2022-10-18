@@ -35,7 +35,7 @@ func NewTradingPool() base.TradingPool {
 	return &TradingPool{}
 }
 
-func NewTradingPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
+func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
 	return &PoolProvider{
 		client:         client,
 		ownerAddress:   ownerAddress,

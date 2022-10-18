@@ -269,6 +269,10 @@ func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) types.Entr
 	}
 }
 
+func (t DexType) Name() string {
+	return DexTypeName(t)
+}
+
 func DexTypeName(t DexType) string {
 	switch t {
 	case Hippo:
