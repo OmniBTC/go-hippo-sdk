@@ -11,6 +11,28 @@ type CoinListApp interface {
 	QueryFetchFullList() (list []types.CoinInfo, err error)
 }
 
+type CustomCoinListApp struct {
+	coinList []types.CoinInfo
+}
+
+func NewCustomCoinListApp(coinList []types.CoinInfo) CoinListApp {
+	return &CustomCoinListApp{
+		coinList: coinList,
+	}
+}
+
+func (c *CustomCoinListApp) QueryFetchFullList() ([]types.CoinInfo, error) {
+	return c.coinList, nil
+}
+
+func (c *CustomCoinListApp) Clear() {
+	c.coinList = make([]types.CoinInfo, 0)
+}
+
+func (c *CustomCoinListApp) Append(coinList []types.CoinInfo) {
+	c.coinList = append(c.coinList, coinList...)
+}
+
 type DevCoinListApp struct {
 }
 
