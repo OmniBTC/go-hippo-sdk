@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/coming-chat/go-aptos/aptosclient"
+	"github.com/omnibtc/go-aptos-liquidswap/liquidswap"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/base"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/coinlist"
 	"github.com/omnibtc/go-hippo-sdk/types"
-	"github.com/omnibtc/go-hippo-sdk/util"
 )
 
 type RawPontemPool struct {
@@ -88,14 +88,36 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 	}
 	inputTokenInfo := t.xCoinInfo
 	outputTokenInfo := t.yCoinInfo
-	reserveInAmt := t.pontemPool.CoinXReserve
-	reserveOutAmt := t.pontemPool.CoinYReserve
 	if !isXToY {
 		inputTokenInfo, outputTokenInfo = outputTokenInfo, inputTokenInfo
-		reserveInAmt, reserveOutAmt = reserveOutAmt, reserveInAmt
 	}
 
-	coinOutAmt := util.GetCoinOutWithFees(inputAmount, reserveInAmt, reserveOutAmt, 3, 1000)
+	fromCoin := liquidswap.Coin{
+		Decimals: inputTokenInfo.Decimals,
+		Symbol:   inputTokenInfo.Symbol,
+		Name:     inputTokenInfo.Name,
+	}
+	toCoin := liquidswap.Coin{
+		Decimals: outputTokenInfo.Decimals,
+		Symbol:   outputTokenInfo.Symbol,
+		Name:     outputTokenInfo.Name,
+	}
+	pool := liquidswap.PoolResource{
+		CoinXReserve: t.pontemPool.CoinXReserve,
+		CoinYReserve: t.pontemPool.CoinYReserve,
+	}
+	if t.lpTag.Name == "Uncorrelated" {
+		pool.CurveType = liquidswap.Uncorellated
+	} else {
+		pool.CurveType = liquidswap.StableCurve
+	}
+
+	var coinOutAmt *big.Int
+	if isXToY {
+		coinOutAmt = liquidswap.GetAmountOut(fromCoin, toCoin, inputAmount, pool)
+	} else {
+		coinOutAmt = liquidswap.GetAmountIn(fromCoin, toCoin, inputAmount, pool)
+	}
 
 	return base.QuoteType{
 		InputSymbol:  inputTokenInfo.Symbol,
