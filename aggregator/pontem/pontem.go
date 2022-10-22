@@ -88,8 +88,14 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 	}
 	inputTokenInfo := t.xCoinInfo
 	outputTokenInfo := t.yCoinInfo
+	pool := liquidswap.PoolResource{
+		CoinXReserve: t.pontemPool.CoinXReserve,
+		CoinYReserve: t.pontemPool.CoinYReserve,
+	}
 	if !isXToY {
 		inputTokenInfo, outputTokenInfo = outputTokenInfo, inputTokenInfo
+		// reserve is same to fromCoin toCoin
+		pool.CoinXReserve, pool.CoinYReserve = pool.CoinYReserve, pool.CoinXReserve
 	}
 
 	fromCoin := liquidswap.Coin{
@@ -101,10 +107,6 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 		Decimals: outputTokenInfo.Decimals,
 		Symbol:   outputTokenInfo.Symbol,
 		Name:     outputTokenInfo.Name,
-	}
-	pool := liquidswap.PoolResource{
-		CoinXReserve: t.pontemPool.CoinXReserve,
-		CoinYReserve: t.pontemPool.CoinYReserve,
 	}
 	if t.lpTag.Name == "Uncorrelated" {
 		pool.CurveType = liquidswap.Uncorellated
