@@ -14,14 +14,37 @@ import (
 	"github.com/omnibtc/go-hippo-sdk/types"
 )
 
-const TestNode = "https://fullnode.testnet.aptoslabs.com"
-const pontemAddress = "0x385068db10693e06512ed54b1e6e8f1fb9945bb7a78c28a45585939ce953f99e"
+const TestNode = "https://fullnode.mainnet.aptoslabs.com"
+const pontemAddress = "0x5a97986a9d031c4567e15b797be516910cfcb4156312482efc6a19c0a30c948"
 
 func main() {
 	client, err := aptosclient.Dial(context.Background(), TestNode)
 	panicErr(err)
 
-	coinListApp := contract.NewDevCoinListApp()
+	coinListApp := contract.NewCustomCoinListApp([]types.CoinInfo{
+		{
+			// 0x1::aptos_coin::AptosCoin
+			Name:     "APT",
+			Symbol:   "APT",
+			Decimals: 8,
+			TokenType: &types.StructTag{
+				Address: "0x1",
+				Module:  "aptos_coin",
+				Name:    "AptosCoin",
+			},
+		},
+		{
+			// 0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T
+			Name:     "USDT(wormhole)",
+			Symbol:   "USDT",
+			Decimals: 6,
+			TokenType: &types.StructTag{
+				Address: "0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852",
+				Module:  "coin",
+				Name:    "T",
+			},
+		},
+	})
 	coinListClient, err := coinlist.LoadCoinListClient(contract.App{
 		CoinList: coinListApp,
 	})
@@ -34,15 +57,15 @@ func main() {
 		types.SimulationKeys{},
 		[]base.TradingPoolProvider{pontem.NewPoolProvider(client, pontemAddress, coinListClient)},
 	)
-	coinX, ok := coinListClient.GetCoinInfoByFullName("0x498d8926f16eb9ca90cab1b3a26aa6f97a080b3fcbe6e83ae150b7243a00fb68::devnet_coins::DevnetBTC")
+	coinX, ok := coinListClient.GetCoinInfoByFullName("0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T")
 	if !ok {
 		panic("coinx not found")
 	}
-	coinY, ok := coinListClient.GetCoinInfoByFullName("0x498d8926f16eb9ca90cab1b3a26aa6f97a080b3fcbe6e83ae150b7243a00fb68::devnet_coins::DevnetUSDT")
+	coinY, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
 	if !ok {
 		panic("coiny not found")
 	}
-	inputAmount := big.NewInt(100000000)
+	inputAmount := big.NewInt(7000000)
 	quotes, err := aggr.GetQuotes(inputAmount, coinX, coinY, 3, false, false)
 	panicErr(err)
 

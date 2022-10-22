@@ -94,7 +94,7 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 	}
 	if !isXToY {
 		inputTokenInfo, outputTokenInfo = outputTokenInfo, inputTokenInfo
-		// reserve is same to fromCoin toCoin
+		// reserve is same to fromCoin
 		pool.CoinXReserve, pool.CoinYReserve = pool.CoinYReserve, pool.CoinXReserve
 	}
 
@@ -115,7 +115,7 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 	}
 
 	var coinOutAmt *big.Int
-	if isXToY {
+	if liquidswap.IsSortedSymbols(fromCoin.Symbol, toCoin.Symbol) {
 		coinOutAmt = liquidswap.GetAmountOut(fromCoin, toCoin, inputAmount, pool)
 	} else {
 		coinOutAmt = liquidswap.GetAmountIn(fromCoin, toCoin, inputAmount, pool)
@@ -159,6 +159,9 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 		lpTag := tag.TypeParams[2].StructTag
 		if nil == xTag || nil == yTag || nil == lpTag {
 			continue
+		}
+		if lpTag.Name != "Uncorrelated" {
+			continue // todo current not use stable
 		}
 		xCoinInfo, bx := p.coinListClient.GetCoinInfoByType(xTag)
 		yCoinInfo, by := p.coinListClient.GetCoinInfoByType(yTag)
