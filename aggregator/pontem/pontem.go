@@ -114,6 +114,11 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 		pool.CurveType = liquidswap.StableCurve
 	}
 
+	// pool x y reserve should order by symbol, not same as fromcoin-tocoin
+	if !liquidswap.IsSortedSymbols(fromCoin.Symbol, toCoin.Symbol) {
+		pool.CoinXReserve, pool.CoinYReserve = pool.CoinYReserve, pool.CoinXReserve
+	}
+
 	coinOutAmt := liquidswap.GetAmountOut(fromCoin, toCoin, inputAmount, pool)
 
 	return base.QuoteType{

@@ -44,6 +44,17 @@ func main() {
 				Name:    "T",
 			},
 		},
+		{
+			// 0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T
+			Name:     "USDT",
+			Symbol:   "USDT",
+			Decimals: 6,
+			TokenType: &types.StructTag{
+				Address: "0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852",
+				Module:  "coin",
+				Name:    "T",
+			},
+		},
 	})
 	coinListClient, err := coinlist.LoadCoinListClient(contract.App{
 		CoinList: coinListApp,
