@@ -35,11 +35,11 @@ func main() {
 		},
 		{
 			// 0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T
-			Name:     "USDT(wormhole)",
-			Symbol:   "USDT",
+			Name:     "USDC",
+			Symbol:   "USDC",
 			Decimals: 6,
 			TokenType: &types.StructTag{
-				Address: "0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852",
+				Address: "0xc7160b1c2415d19a88add188ec726e62aab0045f0aed798106a2ef2994a9101e",
 				Module:  "coin",
 				Name:    "T",
 			},
@@ -57,15 +57,15 @@ func main() {
 		types.SimulationKeys{},
 		[]base.TradingPoolProvider{pontem.NewPoolProvider(client, pontemAddress, coinListClient)},
 	)
-	coinX, ok := coinListClient.GetCoinInfoByFullName("0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T")
+	coinY, ok := coinListClient.GetCoinInfoByFullName("0xc7160b1c2415d19a88add188ec726e62aab0045f0aed798106a2ef2994a9101e::coin::T")
 	if !ok {
 		panic("coinx not found")
 	}
-	coinY, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
+	coinX, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
 	if !ok {
 		panic("coiny not found")
 	}
-	inputAmount := big.NewInt(7000000)
+	inputAmount := big.NewInt(100000000)
 	quotes, err := aggr.GetQuotes(inputAmount, coinX, coinY, 3, false, false)
 	panicErr(err)
 

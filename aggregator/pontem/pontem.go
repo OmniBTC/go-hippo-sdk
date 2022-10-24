@@ -114,12 +114,7 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 		pool.CurveType = liquidswap.StableCurve
 	}
 
-	var coinOutAmt *big.Int
-	if liquidswap.IsSortedSymbols(fromCoin.Symbol, toCoin.Symbol) {
-		coinOutAmt = liquidswap.GetAmountOut(fromCoin, toCoin, inputAmount, pool)
-	} else {
-		coinOutAmt = liquidswap.GetAmountIn(fromCoin, toCoin, inputAmount, pool)
-	}
+	coinOutAmt := liquidswap.GetAmountOut(fromCoin, toCoin, inputAmount, pool)
 
 	return base.QuoteType{
 		InputSymbol:  inputTokenInfo.Symbol,
