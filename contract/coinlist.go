@@ -5,7 +5,9 @@ import (
 )
 
 const devModuleAddress = "0x498d8926f16eb9ca90cab1b3a26aa6f97a080b3fcbe6e83ae150b7243a00fb68"
+const mainModuleAddress = "0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa"
 const devModuleCoinName = "devnet_coins"
+const mainModuleCoinName = "asset"
 
 type CoinListApp interface {
 	QueryFetchFullList() (list []types.CoinInfo, err error)
@@ -50,6 +52,11 @@ func (c *DevCoinListApp) QueryFetchFullList() (list []types.CoinInfo, err error)
 		{"devUSDC", "devUSDC", "DevnetUSDC"},
 		{"devUSDT", "devUSDT", "DevnetUSDT"},
 	}
+	mainData := [][3]string{
+		{"zWETH", "zWETH", "WETH"},
+		{"zUSDT", "zUSDT", "USDT"},
+		{"zUSDC", "zUSDC", "USDC"},
+	}
 	for _, item := range data {
 		coinList = append(coinList, types.CoinInfo{
 			Name:     item[0],
@@ -58,6 +65,18 @@ func (c *DevCoinListApp) QueryFetchFullList() (list []types.CoinInfo, err error)
 			TokenType: &types.StructTag{
 				Address: devModuleAddress,
 				Module:  devModuleCoinName,
+				Name:    item[2],
+			},
+		})
+	}
+	for _, item := range mainData {
+		coinList = append(coinList, types.CoinInfo{
+			Name:     item[0],
+			Decimals: 8,
+			Symbol:   item[1],
+			TokenType: &types.StructTag{
+				Address: mainModuleAddress,
+				Module:  mainModuleCoinName,
 				Name:    item[2],
 			},
 		})

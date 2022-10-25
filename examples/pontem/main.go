@@ -15,47 +15,13 @@ import (
 )
 
 const TestNode = "https://fullnode.mainnet.aptoslabs.com"
-const pontemAddress = "0x5a97986a9d031c4567e15b797be516910cfcb4156312482efc6a19c0a30c948"
+const pontemAddress = "0x05a97986a9d031c4567e15b797be516910cfcb4156312482efc6a19c0a30c948"
 
 func main() {
 	client, err := aptosclient.Dial(context.Background(), TestNode)
 	panicErr(err)
 
-	coinListApp := contract.NewCustomCoinListApp([]types.CoinInfo{
-		{
-			// 0x1::aptos_coin::AptosCoin
-			Name:     "APT",
-			Symbol:   "APT",
-			Decimals: 8,
-			TokenType: &types.StructTag{
-				Address: "0x1",
-				Module:  "aptos_coin",
-				Name:    "AptosCoin",
-			},
-		},
-		{
-			// 0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T
-			Name:     "USDC",
-			Symbol:   "USDC",
-			Decimals: 6,
-			TokenType: &types.StructTag{
-				Address: "0xc7160b1c2415d19a88add188ec726e62aab0045f0aed798106a2ef2994a9101e",
-				Module:  "coin",
-				Name:    "T",
-			},
-		},
-		{
-			// 0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T
-			Name:     "USDT",
-			Symbol:   "USDT",
-			Decimals: 6,
-			TokenType: &types.StructTag{
-				Address: "0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852",
-				Module:  "coin",
-				Name:    "T",
-			},
-		},
-	})
+	coinListApp := contract.NewDevCoinListApp()
 	coinListClient, err := coinlist.LoadCoinListClient(contract.App{
 		CoinList: coinListApp,
 	})
@@ -68,15 +34,15 @@ func main() {
 		types.SimulationKeys{},
 		[]base.TradingPoolProvider{pontem.NewPoolProvider(client, pontemAddress, coinListClient)},
 	)
-	coinY, ok := coinListClient.GetCoinInfoByFullName("0xc7160b1c2415d19a88add188ec726e62aab0045f0aed798106a2ef2994a9101e::coin::T")
-	if !ok {
-		panic("coinx not found")
-	}
-	coinX, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
+	coinX, ok := coinListClient.GetCoinInfoByFullName("0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC")
 	if !ok {
 		panic("coiny not found")
 	}
-	inputAmount := big.NewInt(100000000)
+	coinY, ok := coinListClient.GetCoinInfoByFullName("0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDT")
+	if !ok {
+		panic("coinx not found")
+	}
+	inputAmount := big.NewInt(10000000)
 	quotes, err := aggr.GetQuotes(inputAmount, coinX, coinY, 3, false, false)
 	panicErr(err)
 

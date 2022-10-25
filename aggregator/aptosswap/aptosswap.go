@@ -243,7 +243,7 @@ func (a *AptoswapTradingPool) GetPrice() base.PriceType {
 
 func (a *AptoswapTradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.QuoteType {
 	if !a.IsStateLoaded() {
-		panic("aux pool not loaded")
+		panic("aptosswap pool not loaded")
 	}
 	inputTokenInfo := a._xCoinInfo
 	outputTokenInfo := a._yCoinInfo

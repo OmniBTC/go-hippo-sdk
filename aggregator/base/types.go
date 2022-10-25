@@ -19,6 +19,7 @@ const (
 	Tortuga
 	Aptosswap
 	Aux // 8
+	AnimeSwap
 )
 
 type PoolType uint64
@@ -291,6 +292,8 @@ func DexTypeName(t DexType) string {
 		return "Aptosswap"
 	case Aux:
 		return "Aux"
+	case AnimeSwap:
+		return "AnimeSwap"
 	}
 	return ""
 }
