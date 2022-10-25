@@ -37,6 +37,9 @@ func NewLiquidityPool(resource aptostypes.AccountResource) *LiquidityPool {
 	coinYReserve := types.Coin{
 		Value: coinYValue,
 	}
+	if coinXValue.Cmp(big.NewInt(0)) == 0 || coinYValue.Cmp(big.NewInt(0)) == 0 {
+		return nil
+	}
 
 	kLast, b := big.NewInt(0).SetString(data["k_last"].(string), 10)
 	if !b {

@@ -110,6 +110,9 @@ func MapResourceToPoolInfo(resource aptostypes.AccountResource) (*AptoswapPoolIn
 	if !b {
 		return nil, nil
 	}
+	if x.Cmp(big.NewInt(0)) == 0 || y.Cmp(big.NewInt(0)) == 0 {
+		return nil, nil
+	}
 	lspSupply, b := big.NewInt(0).SetString(data["lsp_supply"].(string), 10)
 	if !b {
 		return nil, nil

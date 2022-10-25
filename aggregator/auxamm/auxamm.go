@@ -132,6 +132,9 @@ func (p *AuxPoolProvider) LoadPoolList() []base.TradingPool {
 
 		x := resource.Data["x_reserve"].(map[string]interface{})["value"].(string)
 		y := resource.Data["y_reserve"].(map[string]interface{})["value"].(string)
+		if x == "0" || y == "0" {
+			continue
+		}
 		xint, b := big.NewInt(0).SetString(x, 10)
 		if !b {
 			continue

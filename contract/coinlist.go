@@ -101,7 +101,7 @@ func (c *DevCoinListApp) QueryFetchFullList() (list []types.CoinInfo, err error)
 			Name:    "USDA",
 		},
 	}, types.CoinInfo{
-		Name:     "APTOS",
+		Name:     "APT",
 		Symbol:   "APT",
 		Decimals: 8,
 		TokenType: &types.StructTag{
