@@ -14,8 +14,8 @@ import (
 	"github.com/omnibtc/go-hippo-sdk/types"
 )
 
-const poolAddress = "0xe1d61154f57bbbb256bb6e3ea786102e7d5c9af481cb4d11b11e579f98218f27"
-const TestNode = "https://fullnode.testnet.aptoslabs.com"
+const poolAddress = "0xbd35135844473187163ca197ca93b2ab014370587bb0ed3befff9e902d6bb541"
+const TestNode = "https://fullnode.mainnet.aptoslabs.com"
 
 func main() {
 	client, err := aptosclient.Dial(context.Background(), TestNode)
@@ -34,11 +34,11 @@ func main() {
 		types.SimulationKeys{},
 		[]base.TradingPoolProvider{auxamm.NewPoolProvider(client, poolAddress, coinListClient)},
 	)
-	coinX, ok := coinListClient.GetCoinInfoByFullName("0x498d8926f16eb9ca90cab1b3a26aa6f97a080b3fcbe6e83ae150b7243a00fb68::devnet_coins::DevnetBTC")
+	coinX, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
 	if !ok {
 		panic("coinx not found")
 	}
-	coinY, ok := coinListClient.GetCoinInfoByFullName("0x498d8926f16eb9ca90cab1b3a26aa6f97a080b3fcbe6e83ae150b7243a00fb68::devnet_coins::DevnetUSDT")
+	coinY, ok := coinListClient.GetCoinInfoByFullName("0x881ac202b1f1e6ad4efcff7a1d0579411533f2502417a19211cfc49751ddb5f4::coin::MOJO")
 	if !ok {
 		panic("coiny not found")
 	}
