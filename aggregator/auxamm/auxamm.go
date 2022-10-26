@@ -100,6 +100,8 @@ func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinLi
 	}
 }
 
+func (p *AuxPoolProvider) SetResourceTypes(resourceTypes []string) {}
+
 func (p *AuxPoolProvider) LoadPoolList() []base.TradingPool {
 	poolList := make([]base.TradingPool, 0)
 	resources, err := p.client.GetAccountResources(p.ownerAddress)

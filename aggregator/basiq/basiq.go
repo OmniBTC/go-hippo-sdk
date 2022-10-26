@@ -123,6 +123,7 @@ func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinLi
 		coinListClient: coinListClient,
 	}
 }
+func (p *BasiqPoolProvider) SetResourceTypes(resourceTypes []string) {}
 
 func (p *BasiqPoolProvider) LoadPoolList() []base.TradingPool {
 	poolList := make([]base.TradingPool, 0)

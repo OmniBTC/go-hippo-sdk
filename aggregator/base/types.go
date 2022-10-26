@@ -55,6 +55,7 @@ type TradingPool interface {
 
 type TradingPoolProvider interface {
 	LoadPoolList() []TradingPool
+	SetResourceTypes(resourceTypes []string)
 }
 
 // TradeStep is a single trade step involving a Pool and a direction (X-to-Y or Y-to-X)
