@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/anime"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/aptosswap"
+	"github.com/omnibtc/go-hippo-sdk/aggregator/pancake"
 	"math/big"
 
 	"github.com/coming-chat/go-aptos/aptosclient"
@@ -24,6 +25,7 @@ const auxPoolAddress = "0xbd35135844473187163ca197ca93b2ab014370587bb0ed3befff9e
 const pontemAddress = "0x05a97986a9d031c4567e15b797be516910cfcb4156312482efc6a19c0a30c948"
 const aptosPoolAddress = "0xa5d3ac4d429052674ed38adc62d010e52d7c24ca159194d17ddc196ddb7e480b"
 const animePoolAddress = "0x796900ebe1a1a54ff9e932f19c548f5c1af5c6e7d34965857ac2f7b1d1ab2cbf"
+const pancakePoolAddress = "0xc7efb4076dbe143cbcd98cfaaa929ecfc8f299203dfff63b95ccb6bfe19850fa"
 
 func main() {
 	client, err := aptosclient.Dial(context.Background(), TestNode)
@@ -46,6 +48,7 @@ func main() {
 			pontem.NewPoolProvider(client, pontemAddress, coinListClient),
 			aptosswap.NewPoolProvider(client, aptosPoolAddress, coinListClient),
 			anime.NewPoolProvider(client, animePoolAddress, coinListClient),
+			pancake.NewPoolProvider(client, pancakePoolAddress, coinListClient),
 		},
 	)
 	coinX, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
@@ -63,6 +66,9 @@ func main() {
 	fmt.Printf("quote size: %d\n", len(quotes))
 
 	for i, q := range quotes {
+		if i == 10 {
+			return
+		}
 		fmt.Printf("quote:%d\n", i)
 		fmt.Printf("Path: ")
 		for _, p := range q.Route.Steps {

@@ -172,6 +172,7 @@ type AnimePoolProvider struct {
 	client         *aptosclient.RestClient
 	ownerAddress   string
 	coinListClient *coinlist.CoinListClient
+	resourceTypes  []string
 }
 
 func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
@@ -182,13 +183,24 @@ func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinLi
 	}
 }
 
-func (p *AnimePoolProvider) SetResourceTypes(resourceTypes []string) {}
+func (p *AnimePoolProvider) SetResourceTypes(resourceTypes []string) {
+	if len(resourceTypes) == 0 {
+		return
+	}
+	p.resourceTypes = resourceTypes
+}
 
 func (p *AnimePoolProvider) LoadPoolList() []base.TradingPool {
 	poolList := make([]base.TradingPool, 0)
 	resources, err := p.client.GetAccountResources(p.ownerAddress, 0)
 	if err != nil {
-		return poolList
+		for _, resourceType := range p.resourceTypes {
+			resource, err := p.client.GetAccountResource(p.ownerAddress, resourceType, 0)
+			if err != nil {
+				continue
+			}
+			resources = append(resources, *resource)
+		}
 	}
 
 	for _, resource := range resources {

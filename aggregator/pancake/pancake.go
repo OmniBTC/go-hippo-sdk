@@ -1,33 +1,71 @@
-package auxamm
+package pancake
 
 import (
-	"math/big"
-	"strconv"
-	"strings"
-
 	"github.com/coming-chat/go-aptos/aptosclient"
+	"github.com/coming-chat/go-aptos/aptostypes"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/base"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/coinlist"
 	"github.com/omnibtc/go-hippo-sdk/types"
-	"github.com/omnibtc/go-hippo-sdk/util"
+	"math/big"
+	"strings"
 )
 
-type TradingPool struct {
-	xCoinInfo    types.CoinInfo
-	yCoinInfo    types.CoinInfo
-	feeBps       int
-	frozen       bool
-	coinXReserve *big.Int
-	coinYReserve *big.Int
-	ownerAddress string
+type Pool struct {
+	reserveX           *big.Int
+	reserveY           *big.Int
+	blockTimestampLast *big.Int
 }
 
-func NewTradingPool() base.TradingPool {
-	return &TradingPool{}
+func NewPool(resource aptostypes.AccountResource) *Pool {
+	data := resource.Data
+	blockTimestampLast, b := big.NewInt(0).SetString(data["block_timestamp_last"].(string), 10)
+	if !b {
+		return nil
+	}
+	reserveX, b := big.NewInt(0).SetString(data["reserve_x"].(string), 10)
+	if !b {
+		return nil
+	}
+	reserveY, b := big.NewInt(0).SetString(data["reserve_y"].(string), 10)
+	if !b {
+		return nil
+	}
+	if reserveX.Cmp(big.NewInt(0)) == 0 || reserveY.Cmp(big.NewInt(0)) == 0 {
+		return nil
+	}
+	return &Pool{
+		reserveX:           reserveX,
+		reserveY:           reserveY,
+		blockTimestampLast: blockTimestampLast,
+	}
+}
+
+func (p *Pool) tokenReserves() (reserveX, reserveY, blockTimestampLast *big.Int) {
+	return p.reserveX, p.reserveY, p.blockTimestampLast
+}
+
+type TradingPool struct {
+	pool      *Pool
+	xCoinInfo types.CoinInfo
+	yCoinInfo types.CoinInfo
+	owner     string
+}
+
+func NewTradingPool(xCoinInfo, yCoinInfo types.CoinInfo, owner string, resource aptostypes.AccountResource) base.TradingPool {
+	pool := NewPool(resource)
+	if pool == nil {
+		return nil
+	}
+	return &TradingPool{
+		pool:      pool,
+		xCoinInfo: xCoinInfo,
+		yCoinInfo: yCoinInfo,
+		owner:     owner,
+	}
 }
 
 func (t *TradingPool) DexType() base.DexType {
-	return base.Aux
+	return base.Pancake
 }
 
 func (t *TradingPool) PoolType() base.PoolType {
@@ -35,7 +73,7 @@ func (t *TradingPool) PoolType() base.PoolType {
 }
 
 func (t *TradingPool) IsRoutable() bool {
-	return !t.frozen
+	return true
 }
 
 func (t *TradingPool) XCoinInfo() types.CoinInfo {
@@ -47,7 +85,7 @@ func (t *TradingPool) YCoinInfo() types.CoinInfo {
 }
 
 func (t *TradingPool) IsStateLoaded() bool {
-	return t.coinXReserve != nil && t.coinYReserve != nil
+	return t.pool != nil
 }
 
 // ReloadState() error
@@ -57,18 +95,18 @@ func (t *TradingPool) GetPrice() base.PriceType {
 
 func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.QuoteType {
 	if !t.IsStateLoaded() {
-		panic("aux pool not loaded")
-	}
-	inputTokenInfo := t.xCoinInfo
-	outputTokenInfo := t.yCoinInfo
-	reserveInAmt := t.coinXReserve
-	reserveOutAmt := t.coinYReserve
-	if !isXToY {
-		inputTokenInfo, outputTokenInfo = outputTokenInfo, inputTokenInfo
-		reserveInAmt, reserveOutAmt = reserveOutAmt, reserveInAmt
+		panic("pancake pool not loaded")
 	}
 
-	coinOutAmt := util.GetCoinOutWithFees(inputAmount, reserveInAmt, reserveOutAmt, int64(t.feeBps), 10000)
+	inputTokenInfo := t.xCoinInfo
+	outputTokenInfo := t.yCoinInfo
+	rin, rout, _ := t.pool.tokenReserves()
+	if !isXToY {
+		inputTokenInfo, outputTokenInfo = outputTokenInfo, inputTokenInfo
+		rin, rout = rout, rin
+	}
+
+	coinOutAmt := getAmountOut(inputAmount, rin, rout)
 
 	return base.QuoteType{
 		InputSymbol:  inputTokenInfo.Symbol,
@@ -86,7 +124,25 @@ func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmoun
 	panic("not implemented")
 }
 
-type AuxPoolProvider struct {
+func getAmountOut(amountIn, reserveIn, reserveOut *big.Int) *big.Int {
+	var temp bool
+	if amountIn.Cmp(big.NewInt(0)) < 0 {
+		panic("insufficient input amount")
+	}
+	if reserveIn.Cmp(big.NewInt(0)) > 0 {
+		temp = reserveOut.Cmp(big.NewInt(0)) > 0
+	}
+	if !temp {
+		panic("insufficient liquidity")
+	}
+	amountInWithFee := new(big.Int).Mul(amountIn, big.NewInt(9975))
+	numerator := new(big.Int).Mul(amountInWithFee, reserveOut)
+	denominator := new(big.Int).Add(new(big.Int).Mul(reserveIn, big.NewInt(10000)), amountInWithFee)
+	amountOut := new(big.Int).Div(numerator, denominator)
+	return amountOut
+}
+
+type PancakePoolProvider struct {
 	client         *aptosclient.RestClient
 	ownerAddress   string
 	coinListClient *coinlist.CoinListClient
@@ -94,21 +150,21 @@ type AuxPoolProvider struct {
 }
 
 func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
-	return &AuxPoolProvider{
+	return &PancakePoolProvider{
 		client:         client,
 		ownerAddress:   ownerAddress,
 		coinListClient: coinListClient,
 	}
 }
 
-func (p *AuxPoolProvider) SetResourceTypes(resourceTypes []string) {
+func (p *PancakePoolProvider) SetResourceTypes(resourceTypes []string) {
 	if len(resourceTypes) == 0 {
 		return
 	}
 	p.resourceTypes = resourceTypes
 }
 
-func (p *AuxPoolProvider) LoadPoolList() []base.TradingPool {
+func (p *PancakePoolProvider) LoadPoolList() []base.TradingPool {
 	poolList := make([]base.TradingPool, 0)
 	resources, err := p.client.GetAccountResources(p.ownerAddress, 0)
 	if err != nil {
@@ -122,7 +178,7 @@ func (p *AuxPoolProvider) LoadPoolList() []base.TradingPool {
 	}
 
 	for _, resource := range resources {
-		if !strings.Contains(resource.Type, "amm::Pool") {
+		if !strings.Contains(resource.Type, "swap::TokenPairReserve") {
 			continue
 		}
 		tag, err := types.ParseMoveStructTag(resource.Type)
@@ -143,32 +199,13 @@ func (p *AuxPoolProvider) LoadPoolList() []base.TradingPool {
 		if !bx || !by {
 			continue
 		}
+		pool := NewTradingPool(xCoinInfo, yCoinInfo, p.ownerAddress, resource)
+		if pool == nil {
+			// todo handle error
+			continue
+		}
 
-		x := resource.Data["x_reserve"].(map[string]interface{})["value"].(string)
-		y := resource.Data["y_reserve"].(map[string]interface{})["value"].(string)
-		if x == "0" || y == "0" {
-			continue
-		}
-		xint, b := big.NewInt(0).SetString(x, 10)
-		if !b {
-			continue
-		}
-		yint, b := big.NewInt(0).SetString(y, 10)
-		if !b {
-			continue
-		}
-		feeBps, _ := strconv.Atoi(resource.Data["fee_bps"].(string))
-		frozen := resource.Data["frozen"].(bool)
-
-		poolList = append(poolList, &TradingPool{
-			xCoinInfo:    xCoinInfo,
-			yCoinInfo:    yCoinInfo,
-			ownerAddress: p.ownerAddress,
-			coinXReserve: xint,
-			coinYReserve: yint,
-			feeBps:       feeBps,
-			frozen:       frozen,
-		})
+		poolList = append(poolList, pool)
 	}
 
 	return poolList

@@ -20,6 +20,7 @@ const (
 	Aptosswap
 	Aux // 8
 	AnimeSwap
+	Pancake
 )
 
 type PoolType uint64
@@ -295,6 +296,8 @@ func DexTypeName(t DexType) string {
 		return "Aux"
 	case AnimeSwap:
 		return "AnimeSwap"
+	case Pancake:
+		return "Pancake"
 	}
 	return ""
 }
