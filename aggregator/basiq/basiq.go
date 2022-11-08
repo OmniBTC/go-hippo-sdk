@@ -127,7 +127,7 @@ func (p *BasiqPoolProvider) SetResourceTypes(resourceTypes []string) {}
 
 func (p *BasiqPoolProvider) LoadPoolList() []base.TradingPool {
 	poolList := make([]base.TradingPool, 0)
-	resources, err := p.client.GetAccountResources(p.ownerAddress)
+	resources, err := p.client.GetAccountResources(p.ownerAddress, 0)
 	if err != nil {
 		return poolList
 	}

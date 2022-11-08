@@ -145,7 +145,7 @@ func (p *PoolProvider) SetResourceTypes(resourceTypes []string) {
 
 func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 	poolList := make([]base.TradingPool, 0)
-	resources, err := p.client.GetAccountResources(p.ownerAddress)
+	resources, err := p.client.GetAccountResources(p.ownerAddress, 0)
 	if err != nil {
 		for _, resourceType := range p.resourceTypes {
 			resource, err := p.client.GetAccountResource(p.ownerAddress, resourceType, 0)

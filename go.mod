@@ -3,7 +3,7 @@ module github.com/omnibtc/go-hippo-sdk
 go 1.18
 
 require (
-	github.com/coming-chat/go-aptos v0.0.0-20221008103530-ec1b8d573f92
+	github.com/coming-chat/go-aptos v0.0.0-20221103071223-ffb02e9c1df9
 	github.com/shopspring/decimal v1.3.1
 )
 
