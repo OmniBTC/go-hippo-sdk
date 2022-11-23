@@ -22,6 +22,7 @@ const (
 	AnimeSwap
 	Cetus
 	Pancake
+	Obric
 )
 
 type PoolType uint64
@@ -301,6 +302,8 @@ func DexTypeName(t DexType) string {
 		return "Cetus"
 	case Pancake:
 		return "Pancake"
+	case Obric:
+		return "Obric"
 	}
 	return ""
 }
