@@ -32,7 +32,11 @@ func getSwapXToYOut(currentX, currentY, inputX, k, k2, xa, xb, m, n *big.Int) *b
 		temp1 = getSwapXToYOutPreprocessedInner(currentX_, currentY_, preprocessedInputX, big.NewInt(1), big.NewInt(1), k, k2, xa, xb, m, n)
 	}
 
-	return new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(temp1, denominator), PRECISION_FACTOR), numerator)
+	return new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(temp1, denominator), PRECISION_FACTOR), numerator)
+}
+
+func getSwapYToXOut(currentX, currentY, inputY, k, k2, xa, xb, m, n *big.Int) *big.Int {
+	return getSwapXToYOut(currentY, currentX, inputY, k, k2, xa, xb, m, n)
 }
 
 func getSwapXToYOutPreprocessed(currentX, currentY, inputX, k, k2, xa, xb, m, n *big.Int) *big.Int {
@@ -65,7 +69,7 @@ func getSwapXToYOutPreprocessedInner(currentX, currentY, inputX, preprocessingNu
 		f_numerator, f_denominator, dydx_numerator, dydx_denominator = solveFUpperLeft(currentX, currentY, n, k2)
 		p_current_xF = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(currentX, f_numerator), PRECISION_FACTOR), f_denominator)
 		p_current_yF = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(currentY, f_numerator), PRECISION_FACTOR), f_denominator)
-		p_input_xF = new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(new(big.Int).Mul(inputX, f_numerator), PRECISION_FACTOR), preprocessingNumerator), f_denominator), preprocessingDenominator)
+		p_input_xF = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(inputX, f_numerator), PRECISION_FACTOR), f_denominator), preprocessingNumerator), preprocessingDenominator)
 		p_new_xF = new(big.Int).Add(p_current_xF, p_input_xF)
 		if p_new_xF.Cmp(p_xa) > 0 {
 			p_output_y_max = mulW(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(inputX, PRECISION_FACTOR), preprocessingNumerator), preprocessingDenominator), dydx_numerator, dydx_denominator)
@@ -91,7 +95,7 @@ func getSwapXToYOutPreprocessedInner(currentX, currentY, inputX, preprocessingNu
 			f_numerator__4, f_denominator__5, dydx_numerator__6, dydx_denominator__7 = solveFMiddle(currentX, currentY, m, k)
 			p_current_xF__8 = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(currentX, f_numerator__4), PRECISION_FACTOR), f_denominator__5)
 			p_current_yF__9 = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(currentY, f_numerator__4), PRECISION_FACTOR), f_denominator__5)
-			p_input_xF__10 = new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(new(big.Int).Mul(inputX, f_numerator__4), PRECISION_FACTOR), preprocessingNumerator), f_denominator__5), preprocessingDenominator)
+			p_input_xF__10 = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(inputX, f_numerator__4), PRECISION_FACTOR), f_denominator__5), preprocessingNumerator), preprocessingDenominator)
 			p_new_xF__11 = new(big.Int).Add(p_current_xF__8, p_input_xF__10)
 			if p_new_xF__11.Cmp(p_xb) > 0 {
 				p_output_y_max__12 = mulW(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(inputX, PRECISION_FACTOR), preprocessingNumerator), preprocessingDenominator), dydx_numerator__6, dydx_denominator__7)
@@ -112,7 +116,7 @@ func getSwapXToYOutPreprocessedInner(currentX, currentY, inputX, preprocessingNu
 			f_numerator__21, f_denominator__22, _, _ = solveFBottomRight(currentX, currentY, n, k2)
 			p_current_xF__23 = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(currentX, f_numerator__21), PRECISION_FACTOR), f_denominator__22)
 			p_current_yF__24 = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(currentY, f_numerator__21), PRECISION_FACTOR), f_denominator__22)
-			p_input_xF__25 = new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(new(big.Int).Mul(inputX, f_numerator__21), PRECISION_FACTOR), preprocessingNumerator), f_denominator__22), preprocessingDenominator)
+			p_input_xF__25 = new(big.Int).Div(new(big.Int).Mul(new(big.Int).Div(new(big.Int).Mul(new(big.Int).Mul(inputX, f_numerator__21), PRECISION_FACTOR), f_denominator__22), preprocessingNumerator), preprocessingDenominator)
 			p_new_xF__26 = new(big.Int).Add(p_current_xF__23, p_input_xF__25)
 			tp := new(big.Int).Sub(p_new_xF__26, p_n)
 			p_new_yF__27 = new(big.Int).Div(p_k2, tp)

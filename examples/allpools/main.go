@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/anime"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/aptosswap"
+	"github.com/omnibtc/go-hippo-sdk/aggregator/obric"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/pancake"
 	"math/big"
 
@@ -26,6 +27,7 @@ const pontemAddress = "0x05a97986a9d031c4567e15b797be516910cfcb4156312482efc6a19
 const aptosPoolAddress = "0xa5d3ac4d429052674ed38adc62d010e52d7c24ca159194d17ddc196ddb7e480b"
 const animePoolAddress = "0x796900ebe1a1a54ff9e932f19c548f5c1af5c6e7d34965857ac2f7b1d1ab2cbf"
 const pancakePoolAddress = "0xc7efb4076dbe143cbcd98cfaaa929ecfc8f299203dfff63b95ccb6bfe19850fa"
+const obricPoolAddress = "0xc7ea756470f72ae761b7986e4ed6fd409aad183b1b2d3d2f674d979852f45c4b"
 
 func main() {
 	client, err := aptosclient.Dial(context.Background(), TestNode)
@@ -49,13 +51,14 @@ func main() {
 			aptosswap.NewPoolProvider(client, aptosPoolAddress, coinListClient),
 			anime.NewPoolProvider(client, animePoolAddress, coinListClient),
 			pancake.NewPoolProvider(client, pancakePoolAddress, coinListClient),
+			obric.NewPoolProvider(client, obricPoolAddress, coinListClient),
 		},
 	)
 	coinX, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
 	if !ok {
 		panic("coinx not found")
 	}
-	coinY, ok := coinListClient.GetCoinInfoByFullName("0xf22bede237a07e121b56d91a491eb7bcdfd1f5907926a9e58338f964a01b17fa::asset::USDC")
+	coinY, ok := coinListClient.GetCoinInfoByFullName("0xa2eda21a58856fda86451436513b867c97eecb4ba099da5775520e0f7492e852::coin::T")
 	if !ok {
 		panic("coiny not found")
 	}
@@ -66,7 +69,7 @@ func main() {
 	fmt.Printf("quote size: %d\n", len(quotes))
 
 	for i, q := range quotes {
-		if i == 10 {
+		if i == 20 {
 			return
 		}
 		fmt.Printf("quote:%d\n", i)

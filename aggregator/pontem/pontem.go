@@ -194,6 +194,10 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 			continue
 		}
 
+		if lpTag.Name != "Uncorrelated" {
+			continue
+		}
+
 		poolList = append(poolList, &TradingPool{
 			pontemPool: RawPontemPool{
 				CoinXReserve: xint,

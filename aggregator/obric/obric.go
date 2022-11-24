@@ -147,7 +147,7 @@ func (p *PieceSwapPoolInfo) quoteYTox(amountYIn *big.Int) *big.Int {
 	currentX := new(big.Int).Mul(p.ReserveX.Value, p.XDeciMult)
 	currentY := new(big.Int).Mul(p.ReserveY.Value, p.YDeciMult)
 	inputY := new(big.Int).Mul(amountYIn, p.YDeciMult)
-	optOutPutX := getSwapXToYOut(currentX, currentY, inputY, p.K, p.K2, p.Xa, p.Xb, p.M, p.N)
+	optOutPutX := getSwapYToXOut(currentX, currentY, inputY, p.K, p.K2, p.Xa, p.Xb, p.M, p.N)
 	return new(big.Int).Div(optOutPutX, p.XDeciMult)
 }
 
