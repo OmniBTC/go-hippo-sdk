@@ -272,7 +272,7 @@ func (a *AptoswapTradingPool) GetTagE() types.TokenType {
 	return types.U8
 }
 
-func (a *AptoswapTradingPool) MakePayload(base.TokenAmount, base.TokenAmount) types.EntryFunctionPayload {
+func (a *AptoswapTradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount, isXToY bool) types.EntryFunctionPayload {
 	panic("not implemented")
 }
 

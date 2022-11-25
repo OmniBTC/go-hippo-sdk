@@ -53,7 +53,7 @@ type TradingPool interface {
 	GetPrice() PriceType
 	GetQuote(inputAmount TokenAmount, isXToY bool) QuoteType
 	GetTagE() types.TokenType
-	MakePayload(input TokenAmount, minOut TokenAmount) types.EntryFunctionPayload
+	MakePayload(input TokenAmount, minOut TokenAmount, isXToY bool) types.EntryFunctionPayload
 }
 
 type TradingPoolProvider interface {
@@ -217,7 +217,7 @@ func (tr *TradeRoute) TryMakeRawPayload(inputAmount, minOutAmount *big.Int) (typ
 	}
 	switch tr.Steps[0].Pool.DexType() {
 	case Aux, Pancake, Pontem:
-		return tr.Steps[0].Pool.MakePayload(inputAmount, minOutAmount), true
+		return tr.Steps[0].Pool.MakePayload(inputAmount, minOutAmount, tr.Steps[0].IsXtoY), true
 	default:
 		return types.EntryFunctionPayload{}, false
 	}

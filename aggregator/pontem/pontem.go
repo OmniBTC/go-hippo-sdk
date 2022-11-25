@@ -134,10 +134,13 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 	}
 }
 
-func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount) types.EntryFunctionPayload {
+func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount, isXToY bool) types.EntryFunctionPayload {
 	xTokenType := t.xCoinInfo.TokenType
 	yTokenType := t.yCoinInfo.TokenType
-
+	if !isXToY {
+		xTokenType, yTokenType = yTokenType, xTokenType
+	}
+	
 	typeArgs := make([]string, 0)
 	typeArgs = append(typeArgs, xTokenType.GetFullName(), yTokenType.GetFullName(), fmt.Sprintf("%s::curves::Uncorrelated", t.scriptAddress))
 	return types.EntryFunctionPayload{

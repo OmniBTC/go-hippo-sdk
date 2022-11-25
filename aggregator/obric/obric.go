@@ -228,7 +228,7 @@ func (t *ObricTradingPool) GetTagE() types.TokenType {
 	return types.U8
 }
 
-func (t *ObricTradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount) types.EntryFunctionPayload {
+func (t *ObricTradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount, isXToY bool) types.EntryFunctionPayload {
 	panic("not implemented")
 }
 

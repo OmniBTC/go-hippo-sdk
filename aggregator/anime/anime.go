@@ -146,7 +146,7 @@ func (a *AnimeTradingPool) GetTagE() types.TokenType {
 	return types.U8
 }
 
-func (a *AnimeTradingPool) MakePayload(base.TokenAmount, base.TokenAmount) types.EntryFunctionPayload {
+func (a *AnimeTradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount, isXToY bool) types.EntryFunctionPayload {
 	panic("not implemented")
 }
 
