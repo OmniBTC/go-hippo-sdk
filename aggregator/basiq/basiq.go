@@ -106,7 +106,7 @@ func (t *TradingPool) GetTagE() types.TokenType {
 	return types.U8
 }
 
-func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount) types.EntryFunctionPayload {
+func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount, isXToY bool) types.EntryFunctionPayload {
 	panic("not implemented") // TODO: Implement
 }
 

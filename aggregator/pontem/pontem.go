@@ -140,15 +140,16 @@ func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmoun
 	if !isXToY {
 		xTokenType, yTokenType = yTokenType, xTokenType
 	}
-	
+
+	inputAmount, outAmount := base.BigIntToUint64(input, minOut)
 	typeArgs := make([]string, 0)
 	typeArgs = append(typeArgs, xTokenType.GetFullName(), yTokenType.GetFullName(), fmt.Sprintf("%s::curves::Uncorrelated", t.scriptAddress))
 	return types.EntryFunctionPayload{
 		Function: fmt.Sprintf("%s::%s::%s", t.scriptAddress, "scripts_v2", "swap"),
 		TypeArgs: typeArgs,
 		Args: []interface{}{
-			input,
-			minOut,
+			inputAmount,
+			outAmount,
 		},
 	}
 }

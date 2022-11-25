@@ -322,6 +322,21 @@ func DexTypeName(t DexType) string {
 	return ""
 }
 
+func BigIntToUint64(x, y *big.Int) (uint64, uint64) {
+	var _x, _y uint64
+	if x == nil {
+		_x = 0
+	} else {
+		_x = x.Uint64()
+	}
+	if y == nil {
+		_y = 0
+	} else {
+		_y = y.Uint64()
+	}
+	return _x, _y
+}
+
 // func ReloadAllPool(pools []TradingPool) {
 // 	wg := sync.WaitGroup{}
 // 	for _, p := range pools {
