@@ -223,10 +223,11 @@ func (p *PoolProvider) LoadPoolList() []base.TradingPool {
 				CoinXReserve: xint,
 				CoinYReserve: yint,
 			},
-			xCoinInfo:    xCoinInfo,
-			yCoinInfo:    yCoinInfo,
-			ownerAddress: p.ownerAddress,
-			lpTag:        *lpTag,
+			xCoinInfo:     xCoinInfo,
+			yCoinInfo:     yCoinInfo,
+			ownerAddress:  p.ownerAddress,
+			lpTag:         *lpTag,
+			scriptAddress: p.scriptAddress,
 		})
 	}
 
