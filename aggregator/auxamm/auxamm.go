@@ -1,6 +1,7 @@
 package auxamm
 
 import (
+	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
@@ -13,13 +14,14 @@ import (
 )
 
 type TradingPool struct {
-	xCoinInfo    types.CoinInfo
-	yCoinInfo    types.CoinInfo
-	feeBps       int
-	frozen       bool
-	coinXReserve *big.Int
-	coinYReserve *big.Int
-	ownerAddress string
+	xCoinInfo     types.CoinInfo
+	yCoinInfo     types.CoinInfo
+	feeBps        int
+	frozen        bool
+	coinXReserve  *big.Int
+	coinYReserve  *big.Int
+	ownerAddress  string
+	scriptAddress string
 }
 
 func NewTradingPool() base.TradingPool {
@@ -83,7 +85,19 @@ func (t *TradingPool) GetTagE() types.TokenType {
 }
 
 func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount) types.EntryFunctionPayload {
-	panic("not implemented")
+	xTokenType := t.xCoinInfo.TokenType
+	yTokenType := t.yCoinInfo.TokenType
+
+	typeArgs := make([]string, 0)
+	typeArgs = append(typeArgs, xTokenType.GetFullName(), yTokenType.GetFullName())
+	return types.EntryFunctionPayload{
+		Function: fmt.Sprintf("%s::%s::%s", t.scriptAddress, "amm", "swap_exact_coin_for_coin_with_signer"),
+		TypeArgs: typeArgs,
+		Args: []interface{}{
+			input,
+			minOut,
+		},
+	}
 }
 
 type AuxPoolProvider struct {
@@ -91,13 +105,15 @@ type AuxPoolProvider struct {
 	ownerAddress   string
 	coinListClient *coinlist.CoinListClient
 	resourceTypes  []string
+	scriptAddress  string
 }
 
-func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
+func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient, scriptAddress string) base.TradingPoolProvider {
 	return &AuxPoolProvider{
 		client:         client,
 		ownerAddress:   ownerAddress,
 		coinListClient: coinListClient,
+		scriptAddress:  scriptAddress,
 	}
 }
 
@@ -161,13 +177,14 @@ func (p *AuxPoolProvider) LoadPoolList() []base.TradingPool {
 		frozen := resource.Data["frozen"].(bool)
 
 		poolList = append(poolList, &TradingPool{
-			xCoinInfo:    xCoinInfo,
-			yCoinInfo:    yCoinInfo,
-			ownerAddress: p.ownerAddress,
-			coinXReserve: xint,
-			coinYReserve: yint,
-			feeBps:       feeBps,
-			frozen:       frozen,
+			xCoinInfo:     xCoinInfo,
+			yCoinInfo:     yCoinInfo,
+			ownerAddress:  p.ownerAddress,
+			coinXReserve:  xint,
+			coinYReserve:  yint,
+			feeBps:        feeBps,
+			frozen:        frozen,
+			scriptAddress: p.scriptAddress,
 		})
 	}
 

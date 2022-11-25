@@ -46,11 +46,11 @@ func main() {
 		types.SimulationKeys{},
 		[]base.TradingPoolProvider{
 			basiq.NewPoolProvider(client, basiqPoolAddress, coinListClient),
-			auxamm.NewPoolProvider(client, auxPoolAddress, coinListClient),
-			pontem.NewPoolProvider(client, pontemAddress, coinListClient),
+			auxamm.NewPoolProvider(client, auxPoolAddress, coinListClient, auxPoolAddress),
+			pontem.NewPoolProvider(client, pontemAddress, coinListClient, pontemAddress),
 			aptosswap.NewPoolProvider(client, aptosPoolAddress, coinListClient),
 			anime.NewPoolProvider(client, animePoolAddress, coinListClient),
-			pancake.NewPoolProvider(client, pancakePoolAddress, coinListClient),
+			pancake.NewPoolProvider(client, pancakePoolAddress, coinListClient, pancakePoolAddress),
 			obric.NewPoolProvider(client, obricPoolAddress, coinListClient),
 		},
 	)

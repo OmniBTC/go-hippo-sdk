@@ -32,7 +32,7 @@ func main() {
 			CoinList: coinListApp,
 		},
 		types.SimulationKeys{},
-		[]base.TradingPoolProvider{auxamm.NewPoolProvider(client, poolAddress, coinListClient)},
+		[]base.TradingPoolProvider{auxamm.NewPoolProvider(client, poolAddress, coinListClient, poolAddress)},
 	)
 	coinX, ok := coinListClient.GetCoinInfoByFullName("0x1::aptos_coin::AptosCoin")
 	if !ok {

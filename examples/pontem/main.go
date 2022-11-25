@@ -27,7 +27,7 @@ func main() {
 	})
 	panicErr(err)
 
-	pontemPool := pontem.NewPoolProvider(client, pontemAddress, coinListClient)
+	pontemPool := pontem.NewPoolProvider(client, pontemAddress, coinListClient, pontemAddress)
 	// apt -- mojo
 	respurceTypes := []string{"0x190d44266241744264b964a37b8f09863167a12d3e70cda39376cfb4e3561e12::liquidity_pool::LiquidityPool<0x881ac202b1f1e6ad4efcff7a1d0579411533f2502417a19211cfc49751ddb5f4::coin::MOJO, 0x1::aptos_coin::AptosCoin, 0x190d44266241744264b964a37b8f09863167a12d3e70cda39376cfb4e3561e12::curves::Uncorrelated>"}
 	pontemPool.SetResourceTypes(respurceTypes)

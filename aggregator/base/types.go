@@ -212,8 +212,15 @@ func (tr *TradeRoute) HasRoundTrip() bool {
 // TryMakeRawPayload return raw router payload when step length is 1
 // raw router payload will cost less gas then hippo on_step_route
 func (tr *TradeRoute) TryMakeRawPayload(inputAmount, minOutAmount *big.Int) (types.EntryFunctionPayload, bool) {
-	// TODO
-	return types.EntryFunctionPayload{}, false
+	if len(tr.Steps) > 1 {
+		return types.EntryFunctionPayload{}, false
+	}
+	switch tr.Steps[0].Pool.DexType() {
+	case Aux, Pancake, Pontem:
+		return tr.Steps[0].Pool.MakePayload(inputAmount, minOutAmount), true
+	default:
+		return types.EntryFunctionPayload{}, false
+	}
 }
 
 func (tr *TradeRoute) MakePayload(inputAmount, minOutAmount *big.Int) types.EntryFunctionPayload {

@@ -1,6 +1,7 @@
 package pontem
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -23,6 +24,7 @@ type TradingPool struct {
 	ownerAddress    string
 	lpTag           types.StructTag
 	poolResourceTag string
+	scriptAddress   string
 }
 
 type PoolProvider struct {
@@ -30,17 +32,19 @@ type PoolProvider struct {
 	ownerAddress   string
 	coinListClient *coinlist.CoinListClient
 	resourceTypes  []string
+	scriptAddress  string
 }
 
 func NewTradingPool() base.TradingPool {
 	return &TradingPool{}
 }
 
-func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
+func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient, scriptAddress string) base.TradingPoolProvider {
 	return &PoolProvider{
 		client:         client,
 		ownerAddress:   ownerAddress,
 		coinListClient: coinListClient,
+		scriptAddress:  scriptAddress,
 	}
 }
 
@@ -131,7 +135,19 @@ func (t *TradingPool) GetQuote(inputAmount base.TokenAmount, isXToY bool) base.Q
 }
 
 func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount) types.EntryFunctionPayload {
-	panic("not implemented")
+	xTokenType := t.xCoinInfo.TokenType
+	yTokenType := t.yCoinInfo.TokenType
+
+	typeArgs := make([]string, 0)
+	typeArgs = append(typeArgs, xTokenType.GetFullName(), yTokenType.GetFullName(), fmt.Sprintf("%s::curves::Uncorrelated", t.scriptAddress))
+	return types.EntryFunctionPayload{
+		Function: fmt.Sprintf("%s::%s::%s", t.scriptAddress, "scripts_v2", "swap"),
+		TypeArgs: typeArgs,
+		Args: []interface{}{
+			input,
+			minOut,
+		},
+	}
 }
 
 /** implement base.TradingPoolProvider */

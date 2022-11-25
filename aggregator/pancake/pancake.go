@@ -1,6 +1,7 @@
 package pancake
 
 import (
+	"fmt"
 	"github.com/coming-chat/go-aptos/aptosclient"
 	"github.com/coming-chat/go-aptos/aptostypes"
 	"github.com/omnibtc/go-hippo-sdk/aggregator/base"
@@ -45,22 +46,24 @@ func (p *Pool) tokenReserves() (reserveX, reserveY, blockTimestampLast *big.Int)
 }
 
 type TradingPool struct {
-	pool      *Pool
-	xCoinInfo types.CoinInfo
-	yCoinInfo types.CoinInfo
-	owner     string
+	pool          *Pool
+	xCoinInfo     types.CoinInfo
+	yCoinInfo     types.CoinInfo
+	owner         string
+	scriptAddress string
 }
 
-func NewTradingPool(xCoinInfo, yCoinInfo types.CoinInfo, owner string, resource aptostypes.AccountResource) base.TradingPool {
+func NewTradingPool(xCoinInfo, yCoinInfo types.CoinInfo, owner string, resource aptostypes.AccountResource, scriptAddress string) base.TradingPool {
 	pool := NewPool(resource)
 	if pool == nil {
 		return nil
 	}
 	return &TradingPool{
-		pool:      pool,
-		xCoinInfo: xCoinInfo,
-		yCoinInfo: yCoinInfo,
-		owner:     owner,
+		pool:          pool,
+		xCoinInfo:     xCoinInfo,
+		yCoinInfo:     yCoinInfo,
+		owner:         owner,
+		scriptAddress: scriptAddress,
 	}
 }
 
@@ -121,7 +124,19 @@ func (t *TradingPool) GetTagE() types.TokenType {
 }
 
 func (t *TradingPool) MakePayload(input base.TokenAmount, minOut base.TokenAmount) types.EntryFunctionPayload {
-	panic("not implemented")
+	xTokenType := t.xCoinInfo.TokenType
+	yTokenType := t.yCoinInfo.TokenType
+
+	typeArgs := make([]string, 0)
+	typeArgs = append(typeArgs, xTokenType.GetFullName(), yTokenType.GetFullName())
+	return types.EntryFunctionPayload{
+		Function: fmt.Sprintf("%s::%s::%s", t.scriptAddress, "router", "swap_exact_input"),
+		TypeArgs: typeArgs,
+		Args: []interface{}{
+			input,
+			minOut,
+		},
+	}
 }
 
 func getAmountOut(amountIn, reserveIn, reserveOut *big.Int) *big.Int {
@@ -147,13 +162,15 @@ type PancakePoolProvider struct {
 	ownerAddress   string
 	coinListClient *coinlist.CoinListClient
 	resourceTypes  []string
+	scriptAddress  string
 }
 
-func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient) base.TradingPoolProvider {
+func NewPoolProvider(client *aptosclient.RestClient, ownerAddress string, coinListClient *coinlist.CoinListClient, scriptAddress string) base.TradingPoolProvider {
 	return &PancakePoolProvider{
 		client:         client,
 		ownerAddress:   ownerAddress,
 		coinListClient: coinListClient,
+		scriptAddress:  scriptAddress,
 	}
 }
 
@@ -199,7 +216,7 @@ func (p *PancakePoolProvider) LoadPoolList() []base.TradingPool {
 		if !bx || !by {
 			continue
 		}
-		pool := NewTradingPool(xCoinInfo, yCoinInfo, p.ownerAddress, resource)
+		pool := NewTradingPool(xCoinInfo, yCoinInfo, p.ownerAddress, resource, p.scriptAddress)
 		if pool == nil {
 			// todo handle error
 			continue
