@@ -29,11 +29,11 @@ func NewTradeAggregator(
 		allPolls:      make([]base.TradingPool, 0),
 		xToAnyPools:   make(map[string][]base.TradingPool),
 	}
-	aggregator.loadAllPoolLists()
+	aggregator.LoadAllPoolLists()
 	return aggregator
 }
 
-func (a *TradeAggregator) loadAllPoolLists() {
+func (a *TradeAggregator) LoadAllPoolLists() {
 	allPools := make([]base.TradingPool, 0)
 	wg := sync.WaitGroup{}
 	l := sync.Mutex{}
